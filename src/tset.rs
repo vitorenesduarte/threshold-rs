@@ -1,7 +1,6 @@
 //! This module contains an implementation of a threshold set.
 //!
-//! The concept of threshold-union is explained in detail in [this blog
-//! post](https://vitorenes.org/post/2018/11/threshold-union/).
+//! The concept of threshold-union is explained in detail in [this blog post](https://vitorenes.org/post/2018/11/threshold-union/).
 //!
 //! # Examples:
 //! ```
@@ -47,7 +46,6 @@ impl<T: Hash + Eq> TSet<T> {
     }
 
     /// Adds a set of elements to the `TSet`.
-    /// This
     ///
     /// # Examples
     /// ```
@@ -108,7 +106,7 @@ impl<T: Hash + Eq> TSet<T> {
         self.occurrences.get(elem).map_or(0, |&count| count)
     }
 
-    /// Computes the threshold-union of all sets added to the `TSet`.
+    /// Computes the [threshold-union](https://vitorenes.org/post/2018/11/threshold-union/) of all sets added to the `TSet`.
     ///
     /// # Examples
     /// ```
