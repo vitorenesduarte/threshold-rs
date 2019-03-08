@@ -2,7 +2,7 @@
 //!
 //! The concept of threshold-union is explained in detail in [this blog post](https://vitorenes.org/post/2018/11/threshold-union/).
 //!
-//! # Examples:
+//! # Examples
 //! ```
 //! use std::collections::HashSet;
 //! use std::iter::FromIterator;
