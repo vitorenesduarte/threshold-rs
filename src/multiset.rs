@@ -5,37 +5,31 @@
 //!
 //! # Examples
 //! ```
-//! use std::collections::HashSet;
 //! use std::iter::FromIterator;
 //! use threshold::*;
 //!
 //! let mut mset = MultiSet::new();
 //!
-//! mset.add(vec!["a", "b"]);
-//! assert_eq!(mset.threshold(1), HashSet::from_iter(vec![&"a", &"b"]));
-//! assert_eq!(mset.threshold(2), HashSet::new());
+//! mset.add(vec![17, 23]);
+//! assert_eq!(mset.threshold(1), vec![&17, &23]);
 //!
-//! mset.add(vec!["a", "c"]);
-//! assert_eq!(
-//!     mset.threshold(1),
-//!     HashSet::from_iter(vec![&"a", &"b", &"c"])
-//! );
-//! assert_eq!(mset.threshold(2), HashSet::from_iter(vec![&"a"]));
+//! mset.add(vec![17, 42]);
+//! assert_eq!(mset.threshold(1), vec![&17, &23, &42]);
+//! assert_eq!(mset.threshold(2), vec![&17]);
 //! ```
 
-use std::collections::{HashMap, HashSet};
-use std::hash::Hash;
+use std::collections::BTreeMap;
 
-pub struct MultiSet<T: Hash + Eq> {
+pub struct MultiSet<T: Ord> {
     /// Number of occurrences of each element added
-    occurrences: HashMap<T, u64>,
+    occurrences: BTreeMap<T, u64>,
 }
 
-impl<T: Hash + Eq> MultiSet<T> {
+impl<T: Ord> MultiSet<T> {
     /// Returns a new `MultiSet` instance.
     pub fn new() -> Self {
         MultiSet {
-            occurrences: HashMap::new(),
+            occurrences: BTreeMap::new(),
         }
     }
 
@@ -45,8 +39,8 @@ impl<T: Hash + Eq> MultiSet<T> {
     /// ```
     /// use threshold::*;
     ///
-    /// let mset = MultiSet::singleton("a");
-    /// assert_eq!(mset.count(&"a"), 1);
+    /// let mset = MultiSet::singleton(17);
+    /// assert_eq!(mset.count(&17), 1);
     /// ```
     pub fn singleton(elem: T) -> Self {
         let mut mset = Self::new();
@@ -61,11 +55,11 @@ impl<T: Hash + Eq> MultiSet<T> {
     /// use threshold::*;
     ///
     /// let mut mset = MultiSet::new();
-    /// assert_eq!(mset.count(&"a"), 0);
+    /// assert_eq!(mset.count(&17), 0);
     ///
-    /// mset.add(vec!["a", "b"]);
-    /// assert_eq!(mset.count(&"a"), 1);
-    /// assert_eq!(mset.count(&"b"), 1);
+    /// mset.add(vec![17, 23]);
+    /// assert_eq!(mset.count(&17), 1);
+    /// assert_eq!(mset.count(&23), 1);
     /// ```
     pub fn add<I: IntoIterator<Item = T>>(&mut self, iter: I) {
         for elem in iter {
@@ -80,10 +74,10 @@ impl<T: Hash + Eq> MultiSet<T> {
     /// use threshold::*;
     ///
     /// let mut mset = MultiSet::new();
-    /// assert_eq!(mset.count(&"a"), 0);
+    /// assert_eq!(mset.count(&17), 0);
     ///
-    /// mset.add_elem("a");
-    /// assert_eq!(mset.count(&"a"), 1);
+    /// mset.add_elem(17);
+    /// assert_eq!(mset.count(&17), 1);
     /// ```
     pub fn add_elem(&mut self, elem: T) {
         match self.occurrences.get_mut(&elem) {
@@ -103,18 +97,18 @@ impl<T: Hash + Eq> MultiSet<T> {
     /// use threshold::*;
     ///
     /// let mut mset = MultiSet::new();
-    /// assert_eq!(mset.count(&"a"), 0);
+    /// assert_eq!(mset.count(&17), 0);
     ///
-    /// mset.add(vec!["a", "b"]);
-    /// assert_eq!(mset.count(&"a"), 1);
-    /// assert_eq!(mset.count(&"b"), 1);
-    /// assert_eq!(mset.count(&"c"), 0);
+    /// mset.add(vec![17, 23]);
+    /// assert_eq!(mset.count(&17), 1);
+    /// assert_eq!(mset.count(&23), 1);
+    /// assert_eq!(mset.count(&42), 0);
     ///
-    /// mset.add(vec!["a", "c"]);
-    /// assert_eq!(mset.count(&"a"), 2);
-    /// assert_eq!(mset.count(&"b"), 1);
-    /// assert_eq!(mset.count(&"c"), 1);
-    /// assert_eq!(mset.count(&"d"), 0);
+    /// mset.add(vec![17, 42]);
+    /// assert_eq!(mset.count(&17), 2);
+    /// assert_eq!(mset.count(&23), 1);
+    /// assert_eq!(mset.count(&42), 1);
+    /// assert_eq!(mset.count(&108), 0);
     /// ```
     pub fn count(&self, elem: &T) -> u64 {
         self.occurrences.get(elem).map_or(0, |&count| count)
@@ -124,30 +118,29 @@ impl<T: Hash + Eq> MultiSet<T> {
     ///
     /// # Examples
     /// ```
-    /// use std::collections::HashSet;
-    /// use std::iter::FromIterator;
     /// use threshold::*;
     ///
     /// let mut mset = MultiSet::new();
-    /// assert_eq!(mset.threshold(1), HashSet::new());
+    /// let empty: Vec<&u64> = Vec::new();
+    /// assert_eq!(mset.threshold(1), empty);
     ///
-    /// mset.add(vec!["a", "b"]);
-    /// assert_eq!(mset.threshold(1), HashSet::from_iter(vec![&"a", &"b"]));
-    /// assert_eq!(mset.threshold(2), HashSet::new());
+    /// mset.add(vec![17, 23]);
+    /// assert_eq!(mset.threshold(1), vec![&17, &23]);
+    /// assert_eq!(mset.threshold(2), empty);
     ///
-    /// mset.add(vec!["a", "c"]);
-    /// assert_eq!(
-    ///     mset.threshold(1),
-    ///     HashSet::from_iter(vec![&"a", &"b", &"c"])
-    /// );
-    /// assert_eq!(mset.threshold(2), HashSet::from_iter(vec![&"a"]));
+    /// mset.add(vec![17, 42]);
+    /// assert_eq!(mset.threshold(1), vec![&17, &23, &42]);
+    /// assert_eq!(mset.threshold(2), vec![&17]);
     /// ```
-    pub fn threshold(&self, threshold: u64) -> HashSet<&T> {
-        self.threshold_iter(threshold).collect()
+    pub fn threshold(&self, threshold: u64) -> Vec<&T> {
+        self.threshold_sorted(threshold).collect()
     }
 
     /// Returns an `Iterator` with the elements in the threshold.
-    pub fn threshold_iter(&self, threshold: u64) -> impl Iterator<Item = &T> {
+    pub fn threshold_sorted(
+        &self,
+        threshold: u64,
+    ) -> impl DoubleEndedIterator<Item = &T> {
         self.occurrences
             .iter()
             .filter(move |(_, &count)| count >= threshold)
