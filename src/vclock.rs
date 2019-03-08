@@ -8,8 +8,7 @@
 //! ```
 
 use crate::traits::Actor;
-use std::cmp;
-use std::collections::HashMap;
+use std::collections::hash_map::{self, HashMap};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Dot<T: Actor> {
@@ -104,7 +103,7 @@ impl<T: Actor> VClock<T> {
     /// assert!(vclock_b.is_element(&dot_a1));
     /// ```
     pub fn add_dot(&mut self, dot: &Dot<T>) {
-        self.upsert(&dot.actor, dot.seq, |seq| cmp::max(seq, dot.seq));
+        self.upsert(&dot.actor, dot.seq, |seq| std::cmp::max(seq, dot.seq));
     }
 
     /// Checks if an `Dot` is part of the clock.
@@ -134,5 +133,24 @@ impl<T: Actor> VClock<T> {
         self.clock
             .get(&dot.actor)
             .map_or(false, |&seq| dot.seq <= seq)
+    }
+}
+
+pub struct IntoIter<T: Actor>(hash_map::IntoIter<T, u64>);
+
+impl<T: Actor> std::iter::Iterator for IntoIter<T> {
+    type Item = (T, u64);
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.0.next()
+    }
+}
+
+impl<T: Actor> std::iter::IntoIterator for VClock<T> {
+    type Item = (T, u64);
+    type IntoIter = IntoIter<T>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        IntoIter(self.clock.into_iter())
     }
 }
