@@ -9,6 +9,7 @@
 
 use crate::traits::Actor;
 use std::collections::hash_map::{self, HashMap};
+use std::iter::FromIterator;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Dot<T: Actor> {
@@ -134,6 +135,28 @@ impl<T: Actor> VClock<T> {
             .get(&dot.actor)
             .map_or(false, |&seq| dot.seq <= seq)
     }
+}
+
+/// Creates a new `VClock` from a list of sequences.
+/// `u64` are used as actor identifers and:
+/// - the first sequence is mapped to actor number 0
+/// - the last sequence is mapped to actor number #sequences - 1
+///
+/// # Examples
+/// ```
+/// use threshold::*;
+///
+/// let vclock = threshold::vclock::from_sequences(vec![10, 20]);
+/// assert!(vclock.is_element(&Dot::new(&0, 10)));
+/// assert!(vclock.is_element(&Dot::new(&1, 20)));
+/// ```
+pub fn from_sequences<I: IntoIterator<Item = u64>>(iter: I) -> VClock<u64> {
+    let clock = HashMap::from_iter(
+        iter.into_iter()
+            .enumerate()
+            .map(|(actor, seq)| (actor as u64, seq)),
+    );
+    VClock { clock }
 }
 
 pub struct IntoIter<T: Actor>(hash_map::IntoIter<T, u64>);
