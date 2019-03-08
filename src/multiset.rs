@@ -133,17 +133,15 @@ impl<T: Ord> MultiSet<T> {
     /// assert_eq!(mset.threshold(2), vec![&17]);
     /// ```
     pub fn threshold(&self, threshold: u64) -> Vec<&T> {
-        self.threshold_sorted(threshold).collect()
-    }
-
-    /// Returns an `Iterator` with the elements in the threshold.
-    pub fn threshold_sorted(
-        &self,
-        threshold: u64,
-    ) -> impl DoubleEndedIterator<Item = &T> {
         self.occurrences
             .iter()
-            .filter(move |(_, &count)| count >= threshold)
+            .filter(|(_, &count)| count >= threshold)
             .map(|(elem, _)| elem)
+            .collect()
+    }
+
+    /// Returns a sorted (ASC) double ended iterator.
+    pub fn iter(&self) -> impl DoubleEndedIterator<Item = (&T, &u64)> {
+        self.occurrences.iter()
     }
 }
