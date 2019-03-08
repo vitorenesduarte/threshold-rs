@@ -84,7 +84,7 @@ impl<T: Actor> TClock<T> {
     /// of all clocks added to the `TClock`.
     ///
     /// Assume multiset `X` is `{10: 1, 8: 2, 6: 3, 5: 1}`.
-    /// This means that event `10` was seen once, even `8` twice, and so on.
+    /// This means that event `10` was seen once, event `8` twice, and so on.
     ///
     /// (Recall that for vector clocks, seeing event 10 means seeing all events
     /// from 1 to 10.)
