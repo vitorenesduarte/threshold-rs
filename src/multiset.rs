@@ -114,7 +114,8 @@ impl<T: Ord> MultiSet<T> {
         self.occurrences.get(elem).map_or(0, |&count| count)
     }
 
-    /// Returns the elements in the `MultiSet` such that its multiplicity is bigger or equal than a given [threshold](https://vitorenes.org/post/2018/11/threshold-union/).
+    /// Returns the elements in the `MultiSet` such that its multiplicity is
+    /// bigger or equal than a given [threshold](https://vitorenes.org/post/2018/11/threshold-union/).
     ///
     /// # Examples
     /// ```

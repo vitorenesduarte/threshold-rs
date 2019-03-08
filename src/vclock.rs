@@ -148,13 +148,13 @@ impl<T: Actor> VClock<T> {
 ///
 /// # Examples
 /// ```
-/// use threshold::*;
+/// use threshold::{vclock, *};
 ///
-/// let vclock = threshold::vclock::from_sequences(vec![10, 20]);
+/// let vclock = vclock::from_seqs(vec![10, 20]);
 /// assert!(vclock.is_element(&Dot::new(&0, 10)));
 /// assert!(vclock.is_element(&Dot::new(&1, 20)));
 /// ```
-pub fn from_sequences<I: IntoIterator<Item = u64>>(iter: I) -> VClock<u64> {
+pub fn from_seqs<I: IntoIterator<Item = u64>>(iter: I) -> VClock<u64> {
     let clock = HashMap::from_iter(
         iter.into_iter()
             .enumerate()
