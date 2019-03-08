@@ -7,13 +7,9 @@
 //! use threshold::*;
 //! ```
 
-use std::cmp;
-use std::collections::HashMap;
-use std::fmt::Debug;
-use std::hash::Hash;
-
-pub trait Actor: Clone + Hash + Eq + Debug {}
-impl<A: Clone + Hash + Eq + Debug> Actor for A {}
+use crate::traits::Actor;
+use std::collections::hash_map::{self, HashMap};
+use std::iter::FromIterator;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Dot<T: Actor> {
@@ -42,9 +38,13 @@ pub struct VClock<T: Actor> {
 impl<T: Actor> VClock<T> {
     /// Returns a new `VClock` instance.
     pub fn new() -> Self {
-        VClock {
-            clock: HashMap::new(),
-        }
+        Self::from_map(HashMap::new())
+    }
+
+    /// Create a `VClock` from a map from actor identifier to its sequence
+    /// number.
+    pub fn from_map(clock: HashMap<T, u64>) -> Self {
+        VClock { clock }
     }
 
     /// Returns a new `Dot` for the `actor` while updating the clock.
@@ -108,7 +108,7 @@ impl<T: Actor> VClock<T> {
     /// assert!(vclock_b.is_element(&dot_a1));
     /// ```
     pub fn add_dot(&mut self, dot: &Dot<T>) {
-        self.upsert(&dot.actor, dot.seq, |seq| cmp::max(seq, dot.seq));
+        self.upsert(&dot.actor, dot.seq, |seq| std::cmp::max(seq, dot.seq));
     }
 
     /// Checks if an `Dot` is part of the clock.
@@ -138,5 +138,46 @@ impl<T: Actor> VClock<T> {
         self.clock
             .get(&dot.actor)
             .map_or(false, |&seq| dot.seq <= seq)
+    }
+}
+
+/// Creates a new `VClock` from a list of sequences.
+/// `u64` are used as actor identifers and:
+/// - the first sequence is mapped to actor number 0
+/// - the last sequence is mapped to actor number #sequences - 1
+///
+/// # Examples
+/// ```
+/// use threshold::{vclock, *};
+///
+/// let vclock = vclock::from_seqs(vec![10, 20]);
+/// assert!(vclock.is_element(&Dot::new(&0, 10)));
+/// assert!(vclock.is_element(&Dot::new(&1, 20)));
+/// ```
+pub fn from_seqs<I: IntoIterator<Item = u64>>(iter: I) -> VClock<u64> {
+    let clock = HashMap::from_iter(
+        iter.into_iter()
+            .enumerate()
+            .map(|(actor, seq)| (actor as u64, seq)),
+    );
+    VClock::from_map(clock)
+}
+
+pub struct IntoIter<T: Actor>(hash_map::IntoIter<T, u64>);
+
+impl<T: Actor> std::iter::Iterator for IntoIter<T> {
+    type Item = (T, u64);
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.0.next()
+    }
+}
+
+impl<T: Actor> std::iter::IntoIterator for VClock<T> {
+    type Item = (T, u64);
+    type IntoIter = IntoIter<T>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        IntoIter(self.clock.into_iter())
     }
 }
