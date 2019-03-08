@@ -7,13 +7,9 @@
 //! use threshold::*;
 //! ```
 
+use crate::traits::Actor;
 use std::cmp;
 use std::collections::HashMap;
-use std::fmt::Debug;
-use std::hash::Hash;
-
-pub trait Actor: Clone + Hash + Eq + Debug {}
-impl<A: Clone + Hash + Eq + Debug> Actor for A {}
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Dot<T: Actor> {
