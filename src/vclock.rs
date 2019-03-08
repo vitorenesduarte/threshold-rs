@@ -38,9 +38,13 @@ pub struct VClock<T: Actor> {
 impl<T: Actor> VClock<T> {
     /// Returns a new `VClock` instance.
     pub fn new() -> Self {
-        VClock {
-            clock: HashMap::new(),
-        }
+        Self::from_map(HashMap::new())
+    }
+
+    /// Create a `VClock` from a map from actor identifier to its sequence
+    /// number.
+    pub fn from_map(clock: HashMap<T, u64>) -> Self {
+        VClock { clock }
     }
 
     /// Returns a new `Dot` for the `actor` while updating the clock.
@@ -156,7 +160,7 @@ pub fn from_sequences<I: IntoIterator<Item = u64>>(iter: I) -> VClock<u64> {
             .enumerate()
             .map(|(actor, seq)| (actor as u64, seq)),
     );
-    VClock { clock }
+    VClock::from_map(clock)
 }
 
 pub struct IntoIter<T: Actor>(hash_map::IntoIter<T, u64>);
