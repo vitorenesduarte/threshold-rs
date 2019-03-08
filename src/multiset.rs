@@ -39,6 +39,21 @@ impl<T: Hash + Eq> MultiSet<T> {
         }
     }
 
+    /// Returns a new `MultiSet` with a single element.
+    ///
+    /// # Examples
+    /// ```
+    /// use threshold::*;
+    ///
+    /// let mset = MultiSet::singleton("a");
+    /// assert_eq!(mset.count(&"a"), 1);
+    /// ```
+    pub fn singleton(elem: T) -> Self {
+        let mut mset = Self::new();
+        mset.add_elem(elem);
+        mset
+    }
+
     /// Adds several elements to the `MultiSet`.
     ///
     /// # Examples
