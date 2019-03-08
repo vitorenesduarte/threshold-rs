@@ -132,11 +132,18 @@ impl<T: Hash + Eq> TSet<T> {
     /// assert_eq!(tset.threshold_union(2), HashSet::from_iter(vec![&"a"]));
     /// ```
     pub fn threshold_union(&self, threshold: u64) -> HashSet<&T> {
+        self.threshold_union_iter(threshold).collect()
+    }
+
+    /// Returns an `Iterator` with elements in the threshold-union.
+    pub fn threshold_union_iter(
+        &self,
+        threshold: u64,
+    ) -> impl Iterator<Item = &T> {
         self.occurrences
             .iter()
-            .filter(|(_, &count)| count >= threshold)
+            .filter(move |(_, &count)| count >= threshold)
             .map(|(elem, _)| elem)
-            .collect()
     }
 
     /// Computes the union of all sets added to the `TSet`.
