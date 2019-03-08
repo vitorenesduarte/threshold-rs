@@ -11,7 +11,7 @@ Assume that these events come from vector clocks, and thus seeing event 10 means
 
 If, for example, we want the event that was seen at least 4 times (i.e. our [threshold](https://vitorenes.org/post/2018/11/threshold-union/) is 4), we should get event `6`.
     
-Assume `threshold(u64, X) -> Option<u64>` where the first argument is the threshold desired. Then:
+Assume `threshold(u64, X) -> Option<u64>` where the first argument is the threshold desired and the output the event that passes the threshold (in case there's one). Then:
 - `threshold(1, X) = Some(10)`
 - `threshold(2, X) = Some(8)`
 - `threshold(3, X) = Some(8)`
