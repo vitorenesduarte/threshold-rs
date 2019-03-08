@@ -8,6 +8,9 @@ matrix:
     - rust: nightly
   fast_finish: true
 
+notifications:
+  email: false
+
 sudo: required
 addons:
   apt:
