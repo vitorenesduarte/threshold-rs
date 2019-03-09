@@ -38,3 +38,33 @@ impl<T: Actor + Arbitrary> Arbitrary for VClock<T> {
         Box::new(vec.shrink().map(|v| VClock::from_vec(v)))
     }
 }
+
+#[cfg(test)]
+mod test {
+    use crate::*;
+    use quickcheck::{Arbitrary, StdThreadGen};
+
+    #[test]
+    fn multiset_shrink() {
+        let count = shrink_count::<MultiSet<u64>>();
+        assert!(count > 0);
+    }
+
+    #[test]
+    fn dot_shrink() {
+        let count = shrink_count::<Dot<u64>>();
+        assert!(count == 0);
+    }
+
+    #[test]
+    fn vclock_shrink() {
+        let count = shrink_count::<VClock<u64>>();
+        assert!(count > 0);
+    }
+
+    fn shrink_count<T: Arbitrary>() -> usize {
+        let mut g = StdThreadGen::new(100);
+        let instance: T = Arbitrary::arbitrary(&mut g);
+        instance.shrink().count()
+    }
+}

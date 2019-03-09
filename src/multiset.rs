@@ -45,7 +45,9 @@ impl<T: Ord> MultiSet<T> {
     /// assert_eq!(mset.count(&17), 1);
     /// ```
     pub fn singleton(elem: T) -> Self {
-        Self::from_vec(vec![(elem, 1)])
+        let mut mset = Self::new();
+        mset.add_elem(elem);
+        mset
     }
 
     /// Creates a new `MultiSet` from a vector of tuples (elem, elem count).
