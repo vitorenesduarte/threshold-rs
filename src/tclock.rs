@@ -67,9 +67,12 @@ impl<T: Actor> TClock<T> {
     fn add_entry(&mut self, actor: T, seq: u64) {
         match self.occurrences.get_mut(&actor) {
             Some(mset) => {
+                // if we have other events from this actor
+                // add `seq` to its multiset
                 mset.add_elem(seq);
             }
             None => {
+                // otherwise create a new multiset for this actor
                 self.occurrences.insert(actor, MultiSet::singleton(seq));
             }
         }
@@ -125,17 +128,26 @@ impl<T: Actor> TClock<T> {
         let mut map = HashMap::new();
 
         for (actor, tset) in self.occurrences.iter() {
-            let mut positives = 0;
+            let mut total_count = 0;
 
             // get the highest sequence that passes the threshold
             let seq = tset
                 .iter()
                 .rev()
                 .skip_while(|(_, &count)| {
-                    positives += count;
-                    positives < threshold
+                    // `total_count` records the implicit the number of
+                    // observations: since we are iterating from the highest
+                    // event to the lowest, and an observation of an event X
+                    // counts as an observations of event Y when X > Y, we
+                    // can simply accumulate all observations in `total_count`
+                    // and stop the `skip_while` once the `total_count` passes
+                    // the threshold
+                    total_count += count;
+                    total_count < threshold
                 })
                 .next()
+                // if there is an even that passes the threshold, return it
+                // otherwise, return `0`
                 .map_or(0, |(&seq, _)| seq);
 
             // insert it in the map
