@@ -41,10 +41,16 @@ impl<T: Actor> VClock<T> {
         Self::from_map(HashMap::new())
     }
 
-    /// Create a `VClock` from a map from actor identifier to its sequence
+    /// Creates a `VClock` from a map from actor identifier to its sequence
     /// number.
     pub fn from_map(clock: HashMap<T, u64>) -> Self {
         VClock { clock }
+    }
+
+    /// Creates a `VClock` from a vector of tuples (actor identifier and
+    /// sequence number).
+    pub fn from_vec(clock: Vec<(T, u64)>) -> Self {
+        Self::from_map(clock.into_iter().collect())
     }
 
     /// Returns a new `Dot` for the `actor` while updating the clock.

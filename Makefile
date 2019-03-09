@@ -1,5 +1,5 @@
 fmt:
-	rustfmt tests/* benches/* src/*
+	rustfmt src/* tests/* benches/*
 
 coverage:
 	cargo coverage

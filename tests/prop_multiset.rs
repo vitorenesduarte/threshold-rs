@@ -19,31 +19,25 @@ fn singleton(x: u64, y: u64) -> TestResult {
 }
 
 #[quickcheck]
-fn add_and_count(x: u64, ls: Vec<Vec<u64>>) -> bool {
-    let mset = mset(ls.clone());
+fn add_and_count(l: Vec<u64>, mset: MultiSet<u64>) -> bool {
+    let mut new_mset = mset.clone();
+    new_mset.add(l.clone());
 
-    // prop: correct counting of `x`
-    count(&x, &ls) == mset.count(&x)
+    // prop: count of the element increased after add by the number of
+    // occurrences of that element in `l`
+    l.iter()
+        .all(|x| new_mset.count(&x) == mset.count(&x) + count(&x, &l))
 }
 
 #[quickcheck]
-fn threshold(threshold: u64, ls: Vec<Vec<u64>>) -> bool {
-    let mset = mset(ls.clone());
-
+fn threshold(threshold: u64, mset: MultiSet<u64>) -> bool {
     // prop: all the elements have a count higher than the threshold
     mset.threshold(threshold)
         .iter()
-        .all(|x| count(&x, &ls) >= threshold)
-}
-
-/// Create a `MultiSet<T>` from a vector of vectors.
-fn mset<T: std::cmp::Ord>(ls: Vec<Vec<T>>) -> MultiSet<T> {
-    let mut mset = MultiSet::new();
-    mset.add(ls.into_iter().flatten());
-    mset
+        .all(|x| mset.count(&x) >= threshold)
 }
 
 /// Count the number of occurrences of `x` in the vector of vectors.
-fn count(x: &u64, ls: &Vec<Vec<u64>>) -> u64 {
-    ls.iter().flatten().filter(|&y| y == x).count() as u64
+fn count(x: &u64, ls: &Vec<u64>) -> u64 {
+    ls.iter().filter(|&y| y == x).count() as u64
 }
