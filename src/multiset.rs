@@ -89,16 +89,9 @@ impl<T: Ord> MultiSet<T> {
     /// assert_eq!(mset.count(&17), 1);
     /// ```
     pub fn add_elem(&mut self, elem: T) {
-        match self.occurrences.get_mut(&elem) {
-            Some(count) => {
-                // if the element exists, increase its count
-                *count += 1;
-            }
-            None => {
-                // otherwise, insert it
-                self.occurrences.insert(elem, 1);
-            }
-        }
+        // increase element count
+        let count = self.occurrences.entry(elem).or_insert(0);
+        *count += 1;
     }
 
     /// Returns the number of occurrences of an element.
