@@ -82,9 +82,11 @@ impl<T: Ord> MultiSet<T> {
     pub fn add_elem(&mut self, elem: T) {
         match self.occurrences.get_mut(&elem) {
             Some(count) => {
+                // if the element exists, increase its count
                 *count += 1;
             }
             None => {
+                // otherwise, insert it
                 self.occurrences.insert(elem, 1);
             }
         }
