@@ -18,8 +18,10 @@
 //! assert_eq!(mset.threshold(2), vec![&17]);
 //! ```
 
-use std::collections::BTreeMap;
+use std::collections::btree_map::{self, BTreeMap};
+use std::iter::FromIterator;
 
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct MultiSet<T: Ord> {
     /// Number of occurrences of each element added
     occurrences: BTreeMap<T, u64>,
@@ -43,9 +45,14 @@ impl<T: Ord> MultiSet<T> {
     /// assert_eq!(mset.count(&17), 1);
     /// ```
     pub fn singleton(elem: T) -> Self {
-        let mut mset = Self::new();
-        mset.add_elem(elem);
-        mset
+        Self::from_vec(vec![(elem, 1)])
+    }
+
+    /// Creates a new `MultiSet` from a vector of tuples (elem, elem count).
+    pub fn from_vec(vec: Vec<(T, u64)>) -> Self {
+        MultiSet {
+            occurrences: BTreeMap::from_iter(vec),
+        }
     }
 
     /// Adds several elements to the `MultiSet`.
@@ -146,5 +153,24 @@ impl<T: Ord> MultiSet<T> {
     /// Returns a sorted (ASC) double ended iterator.
     pub fn iter(&self) -> impl DoubleEndedIterator<Item = (&T, &u64)> {
         self.occurrences.iter()
+    }
+}
+
+pub struct IntoIter<T: Ord>(btree_map::IntoIter<T, u64>);
+
+impl<T: Ord> std::iter::Iterator for IntoIter<T> {
+    type Item = (T, u64);
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.0.next()
+    }
+}
+
+impl<T: Ord> std::iter::IntoIterator for MultiSet<T> {
+    type Item = (T, u64);
+    type IntoIter = IntoIter<T>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        IntoIter(self.occurrences.into_iter())
     }
 }

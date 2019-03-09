@@ -135,18 +135,18 @@ impl<T: Actor> TClock<T> {
                 .iter()
                 .rev()
                 .skip_while(|(_, &count)| {
-                    // `total_count` records the implicit the number of
+                    // `total_count` records the implicit number of
                     // observations: since we are iterating from the highest
-                    // event to the lowest, and an observation of an event X
-                    // counts as an observations of event Y when X > Y, we
+                    // event to the lowest, and the observation of event X
+                    // counts as an observation of event Y when X > Y, we
                     // can simply accumulate all observations in `total_count`
-                    // and stop the `skip_while` once the `total_count` passes
-                    // the threshold
+                    // and stop the `skip_while` once `total_count` passes the
+                    // threshold
                     total_count += count;
                     total_count < threshold
                 })
                 .next()
-                // if there is an even that passes the threshold, return it
+                // if there is an event that passes the threshold, return it
                 // otherwise, return `0`
                 .map_or(0, |(&seq, _)| seq);
 

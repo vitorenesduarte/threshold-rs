@@ -10,6 +10,9 @@ pub mod multiset;
 // This module contains the implementation of Threshold Vector Clock.
 pub mod tclock;
 
+// This module contains implementations of quickcheck::Arbitrary trait.
+mod arbitrary;
+
 // Top-level re-exports.
 pub use crate::multiset::MultiSet;
 pub use crate::tclock::TClock;
