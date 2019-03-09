@@ -2,7 +2,6 @@
 extern crate quickcheck_macros;
 
 use quickcheck::TestResult;
-
 use threshold::MultiSet;
 
 #[quickcheck]
@@ -13,6 +12,7 @@ fn singleton(x: u64, y: u64) -> TestResult {
     }
 
     let mset = MultiSet::singleton(x);
+
     // prop: only the element in the singleton has count 1
     let prop = mset.count(&x) == 1 && mset.count(&y) == 0;
     TestResult::from_bool(prop)
@@ -39,12 +39,7 @@ fn threshold(threshold: u64, ls: Vec<Vec<u64>>) -> bool {
 /// Create a `MultiSet<T>` from a vector of vectors.
 fn mset<T: std::cmp::Ord>(ls: Vec<Vec<T>>) -> MultiSet<T> {
     let mut mset = MultiSet::new();
-
-    // add all lists of elements to the multiset
-    for l in ls {
-        mset.add(l);
-    }
-
+    mset.add(ls.into_iter().flatten());
     mset
 }
 
