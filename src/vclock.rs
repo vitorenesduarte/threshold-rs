@@ -77,24 +77,6 @@ impl<T: Actor> VClock<T> {
         Dot::new(actor, seq)
     }
 
-    /// If the actor is in already the clock, its entry is updated using
-    /// function `map`. Otherwise, a `default` value is inserted.
-    fn upsert<F>(&mut self, actor: &T, default: u64, map: F) -> u64
-    where
-        F: FnOnce(u64) -> u64,
-    {
-        match self.clock.get_mut(actor) {
-            Some(seq) => {
-                *seq = map(*seq);
-                *seq
-            }
-            None => {
-                self.clock.insert(actor.clone(), default);
-                default
-            }
-        }
-    }
-
     /// Adds a `Dot` to the clock.
     ///
     /// # Examples
@@ -114,7 +96,7 @@ impl<T: Actor> VClock<T> {
     /// assert!(vclock_b.is_element(&dot_a1));
     /// ```
     pub fn add_dot(&mut self, dot: &Dot<T>) {
-        self.upsert(&dot.actor, dot.seq, |seq| std::cmp::max(seq, dot.seq));
+        self.add_entry(&dot.actor, dot.seq);
     }
 
     /// Checks if an `Dot` is part of the clock.
@@ -144,6 +126,52 @@ impl<T: Actor> VClock<T> {
         self.clock
             .get(&dot.actor)
             .map_or(false, |&seq| dot.seq <= seq)
+    }
+
+    /// Merges vector clock `other` passed as argument into `self`.
+    /// After merge, all events in `other` are events in `self`.
+    ///
+    /// # Examples
+    /// ```
+    /// use threshold::*;
+    ///
+    /// let actor_a = "A";
+    /// let mut vclock_a = VClock::new();
+    /// let mut vclock_b = VClock::new();
+    ///
+    /// vclock_a.next_dot(&actor_a);
+    /// let dot_a2 = vclock_a.next_dot(&actor_a);
+    ///
+    /// vclock_b.union(&vclock_a);
+    /// assert!(vclock_b.is_element(&dot_a2));
+    /// ```
+    pub fn union(&mut self, other: &VClock<T>) {
+        for (actor, &seq) in other.clock.iter() {
+            self.add_entry(actor, seq);
+        }
+    }
+
+    /// Update a single actor entry.
+    fn add_entry(&mut self, actor: &T, seq: u64) {
+        self.upsert(actor, seq, |current_seq| std::cmp::max(current_seq, seq));
+    }
+
+    /// If the actor is in already the clock, its entry is updated using
+    /// function `map`. Otherwise, a `default` value is inserted.
+    fn upsert<F>(&mut self, actor: &T, default: u64, map: F) -> u64
+    where
+        F: FnOnce(u64) -> u64,
+    {
+        match self.clock.get_mut(actor) {
+            Some(seq) => {
+                *seq = map(*seq);
+                *seq
+            }
+            None => {
+                self.clock.insert(actor.clone(), default);
+                default
+            }
+        }
     }
 }
 
