@@ -1,5 +1,5 @@
 [![Build Status](https://travis-ci.org/vitorenesduarte/threshold-rs.svg?branch=master)](https://travis-ci.org/vitorenesduarte/threshold-rs)
-[![codecov](https://codecov.io/gh/vitorenesduarte/threshold-rs/branch/master/graph/badge.svg)](https://codecov.io/gh/vitorenesduarte/threshold-rs)
+[![Coverage Status](https://coveralls.io/repos/github/vitorenesduarte/threshold-rs/badge.svg)](https://coveralls.io/github/vitorenesduarte/threshold-rs)
 
 ### `threshold-rs`: threshold data structures in Rust!
 
