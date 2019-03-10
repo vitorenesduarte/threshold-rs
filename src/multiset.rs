@@ -153,7 +153,7 @@ impl<T: Ord> MultiSet<T> {
 
 pub struct IntoIter<T: Ord>(btree_map::IntoIter<T, u64>);
 
-impl<T: Ord> std::iter::Iterator for IntoIter<T> {
+impl<T: Ord> Iterator for IntoIter<T> {
     type Item = (T, u64);
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -161,7 +161,7 @@ impl<T: Ord> std::iter::Iterator for IntoIter<T> {
     }
 }
 
-impl<T: Ord> std::iter::IntoIterator for MultiSet<T> {
+impl<T: Ord> IntoIterator for MultiSet<T> {
     type Item = (T, u64);
     type IntoIter = IntoIter<T>;
 

@@ -5,6 +5,16 @@
 //! # Examples
 //! ```
 //! use threshold::*;
+//!
+//! let actor_a = "A";
+//! let mut vclock_a = VClock::new();
+//! let mut vclock_b = VClock::new();
+//!
+//! vclock_a.next_dot(&actor_a);
+//! let dot_a2 = vclock_a.next_dot(&actor_a);
+//!
+//! vclock_b.join(&vclock_a);
+//! assert!(vclock_b.is_element(&dot_a2));
 //! ```
 
 use crate::traits::Actor;
@@ -142,10 +152,10 @@ impl<T: Actor> VClock<T> {
     /// vclock_a.next_dot(&actor_a);
     /// let dot_a2 = vclock_a.next_dot(&actor_a);
     ///
-    /// vclock_b.union(&vclock_a);
+    /// vclock_b.join(&vclock_a);
     /// assert!(vclock_b.is_element(&dot_a2));
     /// ```
-    pub fn union(&mut self, other: &VClock<T>) {
+    pub fn join(&mut self, other: &Self) {
         for (actor, &seq) in other.clock.iter() {
             self.add_entry(actor, seq);
         }
@@ -199,7 +209,7 @@ pub fn from_seqs<I: IntoIterator<Item = u64>>(iter: I) -> VClock<u64> {
 
 pub struct IntoIter<T: Actor>(hash_map::IntoIter<T, u64>);
 
-impl<T: Actor> std::iter::Iterator for IntoIter<T> {
+impl<T: Actor> Iterator for IntoIter<T> {
     type Item = (T, u64);
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -207,10 +217,29 @@ impl<T: Actor> std::iter::Iterator for IntoIter<T> {
     }
 }
 
-impl<T: Actor> std::iter::IntoIterator for VClock<T> {
+impl<T: Actor> IntoIterator for VClock<T> {
     type Item = (T, u64);
     type IntoIter = IntoIter<T>;
 
+    /// Returns `VClock`'s `IntoIterator`
+    ///
+    /// # Examples
+    /// ```
+    /// use threshold::*;
+    ///
+    /// let mut vclock = VClock::new();
+    /// vclock.next_dot(&"A");
+    /// vclock.next_dot(&"A");
+    /// vclock.next_dot(&"B");
+    ///
+    /// for (actor, seq) in vclock {
+    ///     match actor {
+    ///         "A" => assert_eq!(seq, 2),
+    ///         "B" => assert_eq!(seq, 1),
+    ///         _ => panic!("unexpected actor name"),
+    ///     }
+    /// }
+    /// ```
     fn into_iter(self) -> Self::IntoIter {
         IntoIter(self.clock.into_iter())
     }
