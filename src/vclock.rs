@@ -221,7 +221,7 @@ impl<T: Actor> IntoIterator for VClock<T> {
     type Item = (T, u64);
     type IntoIter = IntoIter<T>;
 
-    /// Returns `VClock`'s `IntoIterator`
+    /// Returns a `VClock` into iterator.
     ///
     /// # Examples
     /// ```

@@ -165,6 +165,20 @@ impl<T: Ord> IntoIterator for MultiSet<T> {
     type Item = (T, u64);
     type IntoIter = IntoIter<T>;
 
+    /// Returns a `MultiSet` into iterator.
+    ///
+    /// # Examples
+    /// ```
+    /// use threshold::*;
+    ///
+    /// let elems_count = vec![("A", 2), ("B", 1)];
+    /// let mset = MultiSet::from_vec(elems_count);
+    ///
+    /// let mut iter = mset.into_iter();
+    /// assert_eq!(Some(("A", 2)), iter.next());
+    /// assert_eq!(Some(("B", 1)), iter.next());
+    /// assert_eq!(None, iter.next());
+    /// ```
     fn into_iter(self) -> Self::IntoIter {
         IntoIter(self.occurrences.into_iter())
     }
