@@ -39,7 +39,7 @@ impl Count for (u64, u64) {
 pub trait Actor: Clone + Hash + Eq + Debug {}
 impl<A: Clone + Hash + Eq + Debug> Actor for A {}
 
-/// EventSet trait to be implemented by `MaxInt` and
+/// EventSet trait to be implemented by `MaxSet`, `BelowExSet` and `AboveExSet`.
 pub trait EventSet: IntoIterator + Clone + Debug {
     /// Returns a new instance.
     fn new() -> Self;
@@ -65,13 +65,24 @@ pub trait EventSet: IntoIterator + Clone + Debug {
     /// Checks if an event is part of the set.
     fn is_event(&self, event: &u64) -> bool;
 
-    /// Returns all events seen as a pair:
-    /// - the first component represents the highest event in the contiguous
-    /// sequence
+    /// Returns all events seen as a pair.
+    ///
+    /// For `MaxSet`:
+    /// - the first component is the highest event
+    /// - the second component is empty
+    ///
+    /// For `BelowExSet`:
+    /// - the first component is the highest event
+    /// - the second component is a set of exceptions
+    ///
+    /// For `AboveExSet`:
+    /// - the first component is the highest event in a contiguous sequence
     /// - the second component is a set of outstanding events
     ///
-    /// For example, if we've seen events [1, 2, 3, 5, 6], this function
-    /// returns (3, [5, 6])
+    /// If we've seen events [1, 2, 3, 5, 6], this function returns in
+    /// - `MaxSet`: (6, [])
+    /// - `BelowExSet`: (6, [4])
+    /// - `AboveExSet`: (3, [5, 6])
     fn events(&self) -> (u64, Vec<u64>);
 
     /// Merges `other` `EventSet` into `self`.

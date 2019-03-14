@@ -1,4 +1,4 @@
-//! This module contains an implementation of a max int.
+//! This module contains an implementation of a max set.
 //!
 //! # Examples
 //! ```
@@ -8,46 +8,46 @@
 use crate::EventSet;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct MaxInt {
+pub struct MaxSet {
     // Highest event seen
-    event: u64,
+    max: u64,
 }
 
-impl EventSet for MaxInt {
-    /// Returns a new `MaxInt` instance.
+impl EventSet for MaxSet {
+    /// Returns a new `MaxSet` instance.
     fn new() -> Self {
-        MaxInt { event: 0 }
+        MaxSet { max: 0 }
     }
 
     /// Creates a new instance from `event`.
     fn from_event(event: u64) -> Self {
-        MaxInt { event }
+        MaxSet { max: event }
     }
 
     /// Generates the next event.
     fn next_event(&mut self) -> u64 {
-        self.event += 1;
-        self.event
+        self.max += 1;
+        self.max
     }
 
     /// Adds an event to the set.
     fn add_event(&mut self, event: u64) {
-        self.event = std::cmp::max(self.event, event);
+        self.max = std::cmp::max(self.max, event);
     }
 
     /// Checks if an event is part of the set.
     fn is_event(&self, event: &u64) -> bool {
-        *event <= self.event
+        *event <= self.max
     }
 
     /// Returns all events seen.
     fn events(&self) -> (u64, Vec<u64>) {
-        (self.event, vec![])
+        (self.max, vec![])
     }
 
-    /// Merges `other` `MaxInt` into `self`.
+    /// Merges `other` `MaxSet` into `self`.
     fn join(&mut self, other: &Self) {
-        self.add_event(other.event);
+        self.add_event(other.max);
     }
 }
 
@@ -71,20 +71,20 @@ impl Iterator for IntoIter {
     }
 }
 
-impl IntoIterator for MaxInt {
+impl IntoIterator for MaxSet {
     type Item = u64;
     type IntoIter = IntoIter;
 
-    /// Returns a `MaxInt` into iterator with all events from lowest to highest.
+    /// Returns a `MaxSet` into iterator with all events from lowest to highest.
     ///
     /// # Examples
     /// ```
     /// use threshold::*;
     ///
-    /// let mut max_int = MaxInt::new();
-    /// max_int.add_event(3);
+    /// let mut max_set = MaxSet::new();
+    /// max_set.add_event(3);
     ///
-    /// let mut iter = max_int.into_iter();
+    /// let mut iter = max_set.into_iter();
     /// assert_eq!(iter.next(), Some(1));
     /// assert_eq!(iter.next(), Some(2));
     /// assert_eq!(iter.next(), Some(3));
@@ -93,7 +93,7 @@ impl IntoIterator for MaxInt {
     fn into_iter(self) -> Self::IntoIter {
         IntoIter {
             current: 0,
-            max: self.event,
+            max: self.max,
         }
     }
 }

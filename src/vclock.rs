@@ -21,8 +21,8 @@ use crate::*;
 use std::collections::hash_map::{self, HashMap};
 use std::iter::FromIterator;
 
-// A Vector Clock is `Clock` with `MaxInt` as `EventSet`.
-pub type VClock<A> = Clock<A, MaxInt>;
+// A Vector Clock is `Clock` with `MaxSet` as `EventSet`.
+pub type VClock<A> = Clock<A, MaxSet>;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Dot<A: Actor> {
@@ -210,7 +210,7 @@ pub fn vclock_from_seqs<I: IntoIterator<Item = u64>>(iter: I) -> VClock<u64> {
     let clock = HashMap::from_iter(
         iter.into_iter()
             .enumerate()
-            .map(|(actor, seq)| (actor as u64, MaxInt::from_event(seq))),
+            .map(|(actor, seq)| (actor as u64, MaxSet::from_event(seq))),
     );
     Clock::from_map(clock)
 }
@@ -242,8 +242,8 @@ impl<A: Actor, E: EventSet> IntoIterator for Clock<A, E> {
     ///
     /// for (actor, eset) in clock {
     ///     match actor {
-    ///         "A" => assert_eq!(eset, MaxInt::from_event(2)),
-    ///         "B" => assert_eq!(eset, MaxInt::from_event(1)),
+    ///         "A" => assert_eq!(eset, MaxSet::from_event(2)),
+    ///         "B" => assert_eq!(eset, MaxSet::from_event(1)),
     ///         _ => panic!("unexpected actor name"),
     ///     }
     /// }

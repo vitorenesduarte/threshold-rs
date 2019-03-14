@@ -13,15 +13,15 @@ impl<E: Ord + Arbitrary, C: Count + Arbitrary> Arbitrary for MultiSet<E, C> {
     }
 }
 
-impl Arbitrary for MaxInt {
-    fn arbitrary<G: Gen>(g: &mut G) -> MaxInt {
+impl Arbitrary for MaxSet {
+    fn arbitrary<G: Gen>(g: &mut G) -> MaxSet {
         let events: Vec<u64> = Arbitrary::arbitrary(g);
-        MaxInt::from_events(events)
+        MaxSet::from_events(events)
     }
 
-    fn shrink(&self) -> Box<Iterator<Item = MaxInt>> {
+    fn shrink(&self) -> Box<Iterator<Item = MaxSet>> {
         let vec: Vec<u64> = self.clone().into_iter().collect();
-        Box::new(vec.shrink().map(|v| MaxInt::from_events(v)))
+        Box::new(vec.shrink().map(|v| MaxSet::from_events(v)))
     }
 }
 
