@@ -7,6 +7,8 @@ use threshold::*;
 fn next_dot(actor: String, vclock: VClock<String>) -> bool {
     let mut vclock = vclock.clone();
     let dot = vclock.next_dot(&actor);
+
+    // prop: a newly created dot is now part of the clock
     vclock.is_element(&dot)
 }
 
@@ -14,6 +16,8 @@ fn next_dot(actor: String, vclock: VClock<String>) -> bool {
 fn add_dot(dot: Dot<String>, vclock: VClock<String>) -> bool {
     let mut vclock = vclock.clone();
     vclock.add_dot(&dot);
+
+    // prop: a newly added dot is now part of the clock
     vclock.is_element(&dot)
 }
 

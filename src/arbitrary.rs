@@ -29,6 +29,7 @@ impl<A: Actor + Arbitrary> Arbitrary for Dot<A> {
     fn arbitrary<G: Gen>(g: &mut G) -> Dot<A> {
         let actor: A = Arbitrary::arbitrary(g);
         let seq: u64 = Arbitrary::arbitrary(g);
+        let seq = seq + 1; // ensure it's never 0
         Dot::new(&actor, seq)
     }
 
