@@ -7,17 +7,17 @@
 //! use threshold::*;
 //!
 //! let actor_a = "A";
-//! let mut vclock_a = VClock::new();
-//! let mut vclock_b = VClock::new();
+//! let mut clock_a = VClock::new();
+//! let mut clock_b = VClock::new();
 //!
-//! vclock_a.next_dot(&actor_a);
-//! let dot_a2 = vclock_a.next_dot(&actor_a);
+//! clock_a.next_dot(&actor_a);
+//! let dot_a2 = clock_a.next_dot(&actor_a);
 //!
-//! vclock_b.join(&vclock_a);
-//! assert!(vclock_b.is_element(&dot_a2));
+//! clock_b.join(&clock_a);
+//! assert!(clock_b.is_element(&dot_a2));
 //! ```
 
-use crate::traits::Actor;
+use crate::*;
 use std::collections::hash_map::{self, HashMap};
 use std::iter::FromIterator;
 
@@ -29,9 +29,9 @@ pub struct Dot<T: Actor> {
     seq: u64,
 }
 
-impl<T: Actor> Dot<T> {
+impl<A: Actor> Dot<A> {
     /// Returns a new `Dot` instance.
-    pub fn new(actor: &T, seq: u64) -> Self {
+    pub fn new(actor: &A, seq: u64) -> Self {
         Dot {
             actor: actor.clone(),
             seq,
@@ -40,26 +40,25 @@ impl<T: Actor> Dot<T> {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct VClock<T: Actor> {
-    /// Mapping from actor to its last event sequence
-    clock: HashMap<T, u64>,
+pub struct Clock<A: Actor, E: EventSet> {
+    /// Mapping from actor identifier to an event set
+    clock: HashMap<A, E>,
 }
 
-impl<T: Actor> VClock<T> {
-    /// Returns a new `VClock` instance.
+impl<A: Actor, E: EventSet> Clock<A, E> {
+    /// Returns a new `Clock` instance.
     pub fn new() -> Self {
         Self::from_map(HashMap::new())
     }
 
-    /// Creates a `VClock` from a map from actor identifier to its sequence
-    /// number.
-    pub fn from_map(clock: HashMap<T, u64>) -> Self {
-        VClock { clock }
+    /// Creates a `Clock` from a map from actor identifier to its event set.
+    pub fn from_map(clock: HashMap<A, E>) -> Self {
+        Clock { clock }
     }
 
-    /// Creates a `VClock` from a vector of tuples (actor identifier and
-    /// sequence number).
-    pub fn from_vec(clock: Vec<(T, u64)>) -> Self {
+    /// Creates a `Clock` from a vector of tuples (actor identifier and event
+    /// set).
+    pub fn from_vec(clock: Vec<(A, E)>) -> Self {
         Self::from_map(clock.into_iter().collect())
     }
 
@@ -72,19 +71,40 @@ impl<T: Actor> VClock<T> {
     /// let actor_a = "A";
     /// let actor_b = "B";
     ///
-    /// let mut vclock = VClock::new();
-    /// let dot_a1 = vclock.next_dot(&actor_a);
+    /// let mut clock = VClock::new();
+    /// let dot_a1 = clock.next_dot(&actor_a);
     /// assert_eq!(Dot::new(&actor_a, 1), dot_a1);
     ///
-    /// let dot_a2 = vclock.next_dot(&actor_a);
+    /// let dot_a2 = clock.next_dot(&actor_a);
     /// assert_eq!(Dot::new(&actor_a, 2), dot_a2);
     ///
-    /// let dot_b1 = vclock.next_dot(&actor_b);
+    /// let dot_b1 = clock.next_dot(&actor_b);
     /// assert_eq!(Dot::new(&actor_b, 1), dot_b1);
     /// ```
-    pub fn next_dot(&mut self, actor: &T) -> Dot<T> {
-        let seq = self.upsert(actor, 1, |seq| seq + 1);
+    pub fn next_dot(&mut self, actor: &A) -> Dot<A> {
+        let seq = self.upsert(
+            actor,
+            |eset| eset.next_event(),
+            || (E::from_event(1), 1),
+        );
         Dot::new(actor, seq)
+    }
+
+    /// If the actor is in already the clock, its entry is updated using
+    /// function `map`. Otherwise, the output of `default` is inserted.
+    fn upsert<F, D, R>(&mut self, actor: &A, mut map: F, default: D) -> R
+    where
+        F: FnMut(&mut E) -> R,
+        D: FnOnce() -> (E, R),
+    {
+        match self.clock.get_mut(actor) {
+            Some(eset) => map(eset),
+            None => {
+                let (value, result) = default();
+                self.clock.insert(actor.clone(), value);
+                result
+            }
+        }
     }
 
     /// Adds a `Dot` to the clock.
@@ -96,17 +116,21 @@ impl<T: Actor> VClock<T> {
     /// let actor_a = "A";
     /// let actor_b = "B";
     ///
-    /// let mut vclock_a = VClock::new();
-    /// let mut vclock_b = VClock::new();
+    /// let mut clock_a = VClock::new();
+    /// let mut clock_b = VClock::new();
     ///
-    /// let dot_a1 = vclock_a.next_dot(&actor_a);
+    /// let dot_a1 = clock_a.next_dot(&actor_a);
     ///
-    /// assert!(!vclock_b.is_element(&dot_a1));
-    /// vclock_b.add_dot(&dot_a1);
-    /// assert!(vclock_b.is_element(&dot_a1));
+    /// assert!(!clock_b.is_element(&dot_a1));
+    /// clock_b.add_dot(&dot_a1);
+    /// assert!(clock_b.is_element(&dot_a1));
     /// ```
-    pub fn add_dot(&mut self, dot: &Dot<T>) {
-        self.add_entry(&dot.actor, dot.seq);
+    pub fn add_dot(&mut self, dot: &Dot<A>) {
+        self.upsert(
+            &dot.actor,
+            |eset| eset.add_event(dot.seq),
+            || (E::from_event(dot.seq), ()),
+        );
     }
 
     /// Checks if an `Dot` is part of the clock.
@@ -121,23 +145,22 @@ impl<T: Actor> VClock<T> {
     /// let dot_a2 = Dot::new(&actor_a, 2);
     /// let dot_a3 = Dot::new(&actor_a, 3);
     ///
-    /// let mut vclock = VClock::new();
-    /// assert!(!vclock.is_element(&dot_a1));
-    /// vclock.add_dot(&dot_a1);
-    /// assert!(vclock.is_element(&dot_a1));
-    /// assert!(!vclock.is_element(&dot_a2));
+    /// let mut clock = VClock::new();
+    /// assert!(!clock.is_element(&dot_a1));
+    /// clock.add_dot(&dot_a1);
+    /// assert!(clock.is_element(&dot_a1));
+    /// assert!(!clock.is_element(&dot_a2));
     ///
-    /// vclock.add_dot(&dot_a3);
-    /// assert!(vclock.is_element(&dot_a1));
-    /// assert!(vclock.is_element(&dot_a2));
-    /// assert!(vclock.is_element(&dot_a3));
+    /// clock.add_dot(&dot_a3);
+    /// assert!(clock.is_element(&dot_a1));
+    /// assert!(clock.is_element(&dot_a2));
+    /// assert!(clock.is_element(&dot_a3));
     /// ```
-    pub fn is_element(&self, dot: &Dot<T>) -> bool {
+    pub fn is_element(&self, dot: &Dot<A>) -> bool {
         self.clock
             .get(&dot.actor)
-            .map_or(false, |&seq| dot.seq <= seq)
+            .map_or(false, |eset| eset.is_event(&dot.seq))
     }
-
     /// Merges vector clock `other` passed as argument into `self`.
     /// After merge, all events in `other` are events in `self`.
     ///
@@ -146,46 +169,27 @@ impl<T: Actor> VClock<T> {
     /// use threshold::*;
     ///
     /// let actor_a = "A";
-    /// let mut vclock_a = VClock::new();
-    /// let mut vclock_b = VClock::new();
+    /// let mut clock_a = VClock::new();
+    /// let mut clock_b = VClock::new();
     ///
-    /// vclock_a.next_dot(&actor_a);
-    /// let dot_a2 = vclock_a.next_dot(&actor_a);
+    /// clock_a.next_dot(&actor_a);
+    /// let dot_a2 = clock_a.next_dot(&actor_a);
     ///
-    /// vclock_b.join(&vclock_a);
-    /// assert!(vclock_b.is_element(&dot_a2));
+    /// clock_b.join(&clock_a);
+    /// assert!(clock_b.is_element(&dot_a2));
     /// ```
     pub fn join(&mut self, other: &Self) {
-        for (actor, &seq) in other.clock.iter() {
-            self.add_entry(actor, seq);
-        }
-    }
-
-    /// Update a single actor entry.
-    fn add_entry(&mut self, actor: &T, seq: u64) {
-        self.upsert(actor, seq, |current_seq| std::cmp::max(current_seq, seq));
-    }
-
-    /// If the actor is in already the clock, its entry is updated using
-    /// function `map`. Otherwise, a `default` value is inserted.
-    fn upsert<F>(&mut self, actor: &T, default: u64, map: F) -> u64
-    where
-        F: FnOnce(u64) -> u64,
-    {
-        match self.clock.get_mut(actor) {
-            Some(seq) => {
-                *seq = map(*seq);
-                *seq
-            }
-            None => {
-                self.clock.insert(actor.clone(), default);
-                default
-            }
+        for (actor, eset) in other.clock.iter() {
+            self.upsert(
+                actor,
+                |current_eset| current_eset.join(eset),
+                || (eset.clone(), ()),
+            );
         }
     }
 }
 
-/// Creates a new `VClock` from a list of sequences.
+/// Creates a new `Clock` from a list of sequences.
 /// `u64` are used as actor identifers and:
 /// - the first sequence is mapped to actor number 0
 /// - the last sequence is mapped to actor number #sequences - 1
@@ -194,48 +198,48 @@ impl<T: Actor> VClock<T> {
 /// ```
 /// use threshold::{vclock, *};
 ///
-/// let vclock = vclock::from_seqs(vec![10, 20]);
-/// assert!(vclock.is_element(&Dot::new(&0, 10)));
-/// assert!(vclock.is_element(&Dot::new(&1, 20)));
+/// let clock = vclock::vclock_from_seqs(vec![10, 20]);
+/// assert!(clock.is_element(&Dot::new(&0, 10)));
+/// assert!(clock.is_element(&Dot::new(&1, 20)));
 /// ```
-pub fn from_seqs<I: IntoIterator<Item = u64>>(iter: I) -> VClock<u64> {
+pub fn vclock_from_seqs<I: IntoIterator<Item = u64>>(iter: I) -> VClock<u64> {
     let clock = HashMap::from_iter(
         iter.into_iter()
             .enumerate()
-            .map(|(actor, seq)| (actor as u64, seq)),
+            .map(|(actor, seq)| (actor as u64, MaxInt::from_event(seq))),
     );
-    VClock::from_map(clock)
+    Clock::from_map(clock)
 }
 
-pub struct IntoIter<T: Actor>(hash_map::IntoIter<T, u64>);
+pub struct IntoIter<A: Actor, E: EventSet>(hash_map::IntoIter<A, E>);
 
-impl<T: Actor> Iterator for IntoIter<T> {
-    type Item = (T, u64);
+impl<A: Actor, E: EventSet> Iterator for IntoIter<A, E> {
+    type Item = (A, E);
 
     fn next(&mut self) -> Option<Self::Item> {
         self.0.next()
     }
 }
 
-impl<T: Actor> IntoIterator for VClock<T> {
-    type Item = (T, u64);
-    type IntoIter = IntoIter<T>;
+impl<A: Actor, E: EventSet> IntoIterator for Clock<A, E> {
+    type Item = (A, E);
+    type IntoIter = IntoIter<A, E>;
 
-    /// Returns a `VClock` into iterator.
+    /// Returns a `Clock` into iterator.
     ///
     /// # Examples
     /// ```
     /// use threshold::*;
     ///
-    /// let mut vclock = VClock::new();
-    /// vclock.next_dot(&"A");
-    /// vclock.next_dot(&"A");
-    /// vclock.next_dot(&"B");
+    /// let mut clock = VClock::new();
+    /// clock.next_dot(&"A");
+    /// clock.next_dot(&"A");
+    /// clock.next_dot(&"B");
     ///
-    /// for (actor, seq) in vclock {
+    /// for (actor, eset) in clock {
     ///     match actor {
-    ///         "A" => assert_eq!(seq, 2),
-    ///         "B" => assert_eq!(seq, 1),
+    ///         "A" => assert_eq!(eset, MaxInt::from_event(2)),
+    ///         "B" => assert_eq!(eset, MaxInt::from_event(1)),
     ///         _ => panic!("unexpected actor name"),
     ///     }
     /// }

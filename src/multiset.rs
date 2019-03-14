@@ -10,24 +10,26 @@
 //!
 //! let mut mset = MultiSet::new();
 //!
-//! mset.add(vec![17, 23]);
+//! mset.add(vec![(17, 1), (23, 1)]);
 //! assert_eq!(mset.threshold(1), vec![&17, &23]);
 //!
-//! mset.add(vec![17, 42]);
+//! mset.add(vec![(17, 1), (42, 3)]);
 //! assert_eq!(mset.threshold(1), vec![&17, &23, &42]);
-//! assert_eq!(mset.threshold(2), vec![&17]);
+//! assert_eq!(mset.threshold(2), vec![&17, &42]);
+//! assert_eq!(mset.threshold(3), vec![&42]);
 //! ```
 
+use crate::Count;
 use std::collections::btree_map::{self, BTreeMap};
 use std::iter::FromIterator;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct MultiSet<T: Ord> {
-    /// Number of occurrences of each element added
-    occurrences: BTreeMap<T, u64>,
+pub struct MultiSet<E: Ord, C: Count> {
+    /// Associate a count to each element
+    occurrences: BTreeMap<E, C>,
 }
 
-impl<T: Ord> MultiSet<T> {
+impl<E: Ord, C: Count> MultiSet<E, C> {
     /// Returns a new `MultiSet` instance.
     pub fn new() -> Self {
         MultiSet {
@@ -35,23 +37,8 @@ impl<T: Ord> MultiSet<T> {
         }
     }
 
-    /// Returns a new `MultiSet` with a single element.
-    ///
-    /// # Examples
-    /// ```
-    /// use threshold::*;
-    ///
-    /// let mset = MultiSet::singleton(17);
-    /// assert_eq!(mset.count(&17), 1);
-    /// ```
-    pub fn singleton(elem: T) -> Self {
-        let mut mset = Self::new();
-        mset.add_elem(elem);
-        mset
-    }
-
     /// Creates a new `MultiSet` from a vector of tuples (elem, elem count).
-    pub fn from_vec(vec: Vec<(T, u64)>) -> Self {
+    pub fn from_vec(vec: Vec<(E, C)>) -> Self {
         MultiSet {
             occurrences: BTreeMap::from_iter(vec),
         }
@@ -66,13 +53,13 @@ impl<T: Ord> MultiSet<T> {
     /// let mut mset = MultiSet::new();
     /// assert_eq!(mset.count(&17), 0);
     ///
-    /// mset.add(vec![17, 23]);
+    /// mset.add(vec![(17, 1), (23, 2)]);
     /// assert_eq!(mset.count(&17), 1);
-    /// assert_eq!(mset.count(&23), 1);
+    /// assert_eq!(mset.count(&23), 2);
     /// ```
-    pub fn add<I: IntoIterator<Item = T>>(&mut self, iter: I) {
-        for elem in iter {
-            self.add_elem(elem);
+    pub fn add<I: IntoIterator<Item = (E, C)>>(&mut self, iter: I) {
+        for (elem, by) in iter {
+            self.add_elem(elem, by);
         }
     }
 
@@ -85,13 +72,13 @@ impl<T: Ord> MultiSet<T> {
     /// let mut mset = MultiSet::new();
     /// assert_eq!(mset.count(&17), 0);
     ///
-    /// mset.add_elem(17);
-    /// assert_eq!(mset.count(&17), 1);
+    /// mset.add_elem(17, 2);
+    /// assert_eq!(mset.count(&17), 2);
     /// ```
-    pub fn add_elem(&mut self, elem: T) {
+    pub fn add_elem(&mut self, elem: E, by: C) {
         // increase element count
-        let count = self.occurrences.entry(elem).or_insert(0);
-        *count += 1;
+        let count = self.occurrences.entry(elem).or_insert(Count::zero());
+        count.add(by);
     }
 
     /// Returns the number of occurrences of an element.
@@ -103,21 +90,30 @@ impl<T: Ord> MultiSet<T> {
     /// let mut mset = MultiSet::new();
     /// assert_eq!(mset.count(&17), 0);
     ///
-    /// mset.add(vec![17, 23]);
+    /// mset.add(vec![(17, 1), (23, 1)]);
     /// assert_eq!(mset.count(&17), 1);
     /// assert_eq!(mset.count(&23), 1);
     /// assert_eq!(mset.count(&42), 0);
     ///
-    /// mset.add(vec![17, 42]);
+    /// mset.add(vec![(17, 1), (42, 1)]);
     /// assert_eq!(mset.count(&17), 2);
     /// assert_eq!(mset.count(&23), 1);
     /// assert_eq!(mset.count(&42), 1);
     /// assert_eq!(mset.count(&108), 0);
     /// ```
-    pub fn count(&self, elem: &T) -> u64 {
-        self.occurrences.get(elem).map_or(0, |&count| count)
+    pub fn count(&self, elem: &E) -> C {
+        self.occurrences
+            .get(elem)
+            .map_or(Count::zero(), |&count| count)
     }
 
+    /// Returns a sorted (ASC) double ended iterator.
+    pub fn iter(&self) -> impl DoubleEndedIterator<Item = (&E, &C)> {
+        self.occurrences.iter()
+    }
+}
+
+impl<E: Ord> MultiSet<E, u64> {
     /// Returns the elements in the `MultiSet` such that its multiplicity is
     /// bigger or equal than a given [threshold](https://vitorenes.org/post/2018/11/threshold-union/).
     ///
@@ -129,41 +125,38 @@ impl<T: Ord> MultiSet<T> {
     /// let empty: Vec<&u64> = Vec::new();
     /// assert_eq!(mset.threshold(1), empty);
     ///
-    /// mset.add(vec![17, 23]);
+    /// mset.add(vec![(17, 1), (23, 1)]);
     /// assert_eq!(mset.threshold(1), vec![&17, &23]);
     /// assert_eq!(mset.threshold(2), empty);
     ///
-    /// mset.add(vec![17, 42]);
+    /// mset.add(vec![(17, 1), (42, 3)]);
     /// assert_eq!(mset.threshold(1), vec![&17, &23, &42]);
-    /// assert_eq!(mset.threshold(2), vec![&17]);
+    /// assert_eq!(mset.threshold(2), vec![&17, &42]);
+    /// assert_eq!(mset.threshold(3), vec![&42]);
+    /// assert_eq!(mset.threshold(4), empty);
     /// ```
-    pub fn threshold(&self, threshold: u64) -> Vec<&T> {
+    pub fn threshold(&self, threshold: u64) -> Vec<&E> {
         self.occurrences
             .iter()
             .filter(|(_, &count)| count >= threshold)
             .map(|(elem, _)| elem)
             .collect()
     }
-
-    /// Returns a sorted (ASC) double ended iterator.
-    pub fn iter(&self) -> impl DoubleEndedIterator<Item = (&T, &u64)> {
-        self.occurrences.iter()
-    }
 }
 
-pub struct IntoIter<T: Ord>(btree_map::IntoIter<T, u64>);
+pub struct IntoIter<E: Ord, C: Count>(btree_map::IntoIter<E, C>);
 
-impl<T: Ord> Iterator for IntoIter<T> {
-    type Item = (T, u64);
+impl<E: Ord, C: Count> Iterator for IntoIter<E, C> {
+    type Item = (E, C);
 
     fn next(&mut self) -> Option<Self::Item> {
         self.0.next()
     }
 }
 
-impl<T: Ord> IntoIterator for MultiSet<T> {
-    type Item = (T, u64);
-    type IntoIter = IntoIter<T>;
+impl<E: Ord, C: Count> IntoIterator for MultiSet<E, C> {
+    type Item = (E, C);
+    type IntoIter = IntoIter<E, C>;
 
     /// Returns a `MultiSet` into iterator.
     ///

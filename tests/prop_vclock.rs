@@ -23,8 +23,10 @@ fn join(vclock_a: VClock<u64>, vclock_b: VClock<u64>) -> bool {
     vclock_a.join(&vclock_b);
 
     // prop: after merging b into a, all events in b are events in a
-    vclock_b.into_iter().all(|(actor, seq)| {
-        let dot = Dot::new(&actor, seq);
-        vclock_a.is_element(&dot)
+    vclock_b.into_iter().all(|(actor, eset)| {
+        eset.into_iter().all(|seq| {
+            let dot = Dot::new(&actor, seq);
+            vclock_a.is_element(&dot)
+        })
     })
 }
