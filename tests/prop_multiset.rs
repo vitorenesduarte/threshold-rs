@@ -5,13 +5,13 @@ use quickcheck::TestResult;
 use threshold::MultiSet;
 
 #[quickcheck]
-fn singleton(x: u64, y: u64) -> TestResult {
+fn singleton(x: String, y: String) -> TestResult {
     // discard invalid inputs
     if x == y {
         return TestResult::discard();
     }
 
-    let mset: MultiSet<u64, u64> = MultiSet::from_vec(vec![(x, 1)]);
+    let mset: MultiSet<String, u64> = MultiSet::from_vec(vec![(x.clone(), 1)]);
 
     // prop: only the element in the singleton has count 1
     let prop = mset.count(&x) == 1 && mset.count(&y) == 0;

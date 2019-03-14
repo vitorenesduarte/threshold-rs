@@ -21,6 +21,9 @@ use crate::*;
 use std::collections::hash_map::{self, HashMap};
 use std::iter::FromIterator;
 
+// A Vector Clock is `Clock` with `MaxInt` as `EventSet`.
+pub type VClock<A> = Clock<A, MaxInt>;
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Dot<T: Actor> {
     /// Actor identifer
