@@ -1,41 +1,52 @@
 use crate::*;
 use quickcheck::{Arbitrary, Gen};
 
-impl<T: Ord + Arbitrary> Arbitrary for MultiSet<T> {
-    fn arbitrary<G: Gen>(g: &mut G) -> MultiSet<T> {
-        let vec: Vec<T> = Arbitrary::arbitrary(g);
-        let mut mset = MultiSet::new();
-        mset.add(vec);
-        mset
+impl<E: Ord + Arbitrary, C: Count + Arbitrary> Arbitrary for MultiSet<E, C> {
+    fn arbitrary<G: Gen>(g: &mut G) -> MultiSet<E, C> {
+        let vec: Vec<(E, C)> = Arbitrary::arbitrary(g);
+        MultiSet::from(vec)
     }
 
-    fn shrink(&self) -> Box<Iterator<Item = MultiSet<T>>> {
-        let vec: Vec<(T, u64)> = self.clone().into_iter().collect();
-        Box::new(vec.shrink().map(|v| MultiSet::from_vec(v)))
+    fn shrink(&self) -> Box<Iterator<Item = MultiSet<E, C>>> {
+        let vec: Vec<(E, C)> = self.clone().into_iter().collect();
+        Box::new(vec.shrink().map(|v| MultiSet::from(v)))
     }
 }
 
-impl<T: Actor + Arbitrary> Arbitrary for Dot<T> {
-    fn arbitrary<G: Gen>(g: &mut G) -> Dot<T> {
-        let actor: T = Arbitrary::arbitrary(g);
+impl Arbitrary for MaxSet {
+    fn arbitrary<G: Gen>(g: &mut G) -> MaxSet {
+        let events: Vec<u64> = Arbitrary::arbitrary(g);
+        MaxSet::from_events(events)
+    }
+
+    fn shrink(&self) -> Box<Iterator<Item = MaxSet>> {
+        let vec: Vec<u64> = self.clone().into_iter().collect();
+        Box::new(vec.shrink().map(|v| MaxSet::from_events(v)))
+    }
+}
+
+impl<A: Actor + Arbitrary> Arbitrary for Dot<A> {
+    fn arbitrary<G: Gen>(g: &mut G) -> Dot<A> {
+        let actor: A = Arbitrary::arbitrary(g);
         let seq: u64 = Arbitrary::arbitrary(g);
+        let seq = seq + 1; // ensure it's never 0
         Dot::new(&actor, seq)
     }
 
-    fn shrink(&self) -> Box<Iterator<Item = Dot<T>>> {
+    fn shrink(&self) -> Box<Iterator<Item = Dot<A>>> {
         Box::new(std::iter::empty::<Dot<_>>())
     }
 }
 
-impl<T: Actor + Arbitrary> Arbitrary for VClock<T> {
-    fn arbitrary<G: Gen>(g: &mut G) -> VClock<T> {
-        let vec: Vec<(T, u64)> = Arbitrary::arbitrary(g);
-        VClock::from_vec(vec)
+impl<A: Actor + Arbitrary, E: EventSet + Arbitrary> Arbitrary for Clock<A, E> {
+    fn arbitrary<G: Gen>(g: &mut G) -> Clock<A, E> {
+        let vec: Vec<(A, E)> = Arbitrary::arbitrary(g);
+        Clock::from(vec)
     }
 
-    fn shrink(&self) -> Box<Iterator<Item = VClock<T>>> {
-        let vec: Vec<(T, u64)> = self.clone().into_iter().collect();
-        Box::new(vec.shrink().map(|v| VClock::from_vec(v)))
+    fn shrink(&self) -> Box<Iterator<Item = Clock<A, E>>> {
+        let vec: Vec<(A, E)> = self.clone().into_iter().collect();
+        Box::new(vec.shrink().map(|v| Clock::from(v)))
     }
 }
 
@@ -46,7 +57,7 @@ mod test {
 
     #[test]
     fn multiset_shrink() {
-        let count = shrink_count::<MultiSet<u64>>();
+        let count = shrink_count::<MultiSet<u64, u64>>();
         assert!(count > 0);
     }
 

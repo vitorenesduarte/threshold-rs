@@ -6,83 +6,78 @@
 //! ```
 //! use threshold::{vclock, *};
 //!
-//! let vclock_0 = vclock::from_seqs(vec![10, 5, 5]);
-//! let vclock_1 = vclock::from_seqs(vec![8, 10, 6]);
+//! let vclock_0 = vclock::vclock_from_seqs(vec![10, 5, 5]);
+//! let vclock_1 = vclock::vclock_from_seqs(vec![8, 10, 6]);
 //!
 //! let mut tclock = TClock::new();
 //! tclock.add(vclock_0);
 //! tclock.add(vclock_1);
 //!
-//! let vclock_t1 = vclock::from_seqs(vec![10, 10, 6]);
-//! let vclock_t2 = vclock::from_seqs(vec![8, 5, 5]);
+//! let vclock_t1 = vclock::vclock_from_seqs(vec![10, 10, 6]);
+//! let vclock_t2 = vclock::vclock_from_seqs(vec![8, 5, 5]);
 //!
 //! assert_eq!(tclock.threshold_union(1), vclock_t1);
 //! assert_eq!(tclock.threshold_union(2), vclock_t2);
-//!
-//! assert_eq!(tclock.threshold_union(1), tclock.union());
-//! assert_eq!(tclock.threshold_union(2), tclock.intersection());
 //! ```
 
 use crate::*;
 use std::collections::HashMap;
+use std::marker::PhantomData;
 
-pub struct TClock<T: Actor> {
-    /// Number of clocks added to the `TClock`
-    clock_count: u64,
+type EventCount = (u64, u64);
+
+pub struct TClock<A: Actor, E: EventSet> {
     /// A `MultiSet` per `Actor`
-    occurrences: HashMap<T, MultiSet<u64>>,
+    occurrences: HashMap<A, MultiSet<u64, EventCount>>,
+    phantom: PhantomData<E>,
 }
 
-impl<T: Actor> TClock<T> {
+impl<A: Actor, E: EventSet> TClock<A, E> {
     /// Returns a new `TClock` instance.
     pub fn new() -> Self {
         TClock {
-            clock_count: 0,
             occurrences: HashMap::new(),
+            phantom: PhantomData,
         }
     }
 
-    /// Adds a `VClock` to the `TClock`.
+    /// Add a `Clock` to the `TClock`.
     ///
     /// # Examples
     /// ```
     /// use threshold::{vclock, *};
     ///
     /// let mut tset = TClock::new();
-    /// assert_eq!(tset.clock_count(), 0);
     ///
-    /// let vclock = vclock::from_seqs(1..10);
+    /// let vclock = vclock::vclock_from_seqs(1..10);
     /// tset.add(vclock);
-    /// assert_eq!(tset.clock_count(), 1);
     /// ```
-    pub fn add(&mut self, clock: VClock<T>) {
-        self.clock_count += 1;
-
-        for (actor, seq) in clock {
-            self.add_entry(actor, seq);
+    pub fn add(&mut self, clock: Clock<A, E>) {
+        for (actor, eset) in clock {
+            self.add_entry(actor, eset);
         }
     }
 
     /// Adds a single clock entry to the `TClock`.
-    fn add_entry(&mut self, actor: T, seq: u64) {
+    fn add_entry(&mut self, actor: A, eset: E) {
+        // compute event count
+        let count = event_count(eset);
+
         match self.occurrences.get_mut(&actor) {
             Some(mset) => {
                 // if we have other events from this actor
-                // add `seq` to its multiset
-                mset.add_elem(seq);
+                // add new events to its multiset
+                mset.add(count);
             }
             None => {
                 // otherwise create a new multiset for this actor
-                self.occurrences.insert(actor, MultiSet::singleton(seq));
+                self.occurrences.insert(actor, MultiSet::from(count));
             }
         }
     }
+}
 
-    /// Returns the number of clocks added to the `TClock`.
-    pub fn clock_count(&self) -> u64 {
-        self.clock_count
-    }
-
+impl<A: Actor> TClock<A, MaxSet> {
     /// Computes the [threshold-union](https://vitorenes.org/post/2018/11/threshold-union/)
     /// of all clocks added to the `TClock`.
     ///
@@ -107,34 +102,32 @@ impl<T: Actor> TClock<T> {
     /// # Examples
     /// ```
     /// use threshold::{vclock, *};
-    /// let vclock_0 = vclock::from_seqs(vec![10, 5, 5]);
-    /// let vclock_1 = vclock::from_seqs(vec![8, 10, 6]);
-    /// let vclock_2 = vclock::from_seqs(vec![9, 8, 7]);
+    /// let vclock_0 = vclock::vclock_from_seqs(vec![10, 5, 5]);
+    /// let vclock_1 = vclock::vclock_from_seqs(vec![8, 10, 6]);
+    /// let vclock_2 = vclock::vclock_from_seqs(vec![9, 8, 7]);
     ///
     /// let mut tclock = TClock::new();
     /// tclock.add(vclock_0);
     /// tclock.add(vclock_1);
     /// tclock.add(vclock_2);
     ///
-    /// let vclock_t1 = vclock::from_seqs(vec![10, 10, 7]);
-    /// let vclock_t2 = vclock::from_seqs(vec![9, 8, 6]);
-    /// let vclock_t3 = vclock::from_seqs(vec![8, 5, 5]);
+    /// let vclock_t1 = vclock::vclock_from_seqs(vec![10, 10, 7]);
+    /// let vclock_t2 = vclock::vclock_from_seqs(vec![9, 8, 6]);
+    /// let vclock_t3 = vclock::vclock_from_seqs(vec![8, 5, 5]);
     ///
     /// assert_eq!(tclock.threshold_union(1), vclock_t1);
     /// assert_eq!(tclock.threshold_union(2), vclock_t2);
     /// assert_eq!(tclock.threshold_union(3), vclock_t3);
     /// ```
-    pub fn threshold_union(&self, threshold: u64) -> VClock<T> {
-        let mut map = HashMap::new();
-
-        for (actor, tset) in self.occurrences.iter() {
+    pub fn threshold_union(&self, threshold: u64) -> VClock<A> {
+        let iter = self.occurrences.iter().map(|(actor, tset)| {
             let mut total_count = 0;
 
             // get the highest sequence that passes the threshold
             let seq = tset
                 .iter()
                 .rev()
-                .skip_while(|(_, &count)| {
+                .skip_while(|(_, &(count, _))| {
                     // `total_count` records the implicit number of
                     // observations: since we are iterating from the highest
                     // event to the lowest, and the observation of event X
@@ -148,48 +141,30 @@ impl<T: Actor> TClock<T> {
                 .next()
                 // if there is an event that passes the threshold, return it
                 // otherwise, return `0`
-                .map_or(0, |(&seq, _)| seq);
+                .map_or_else(
+                    || MaxSet::new(),
+                    |(&seq, _)| MaxSet::from_event(seq),
+                );
 
-            // insert it in the map
-            map.insert(actor.clone(), seq);
-        }
+            (actor.clone(), seq)
+        });
 
-        VClock::from_map(map)
+        VClock::from(iter)
     }
+}
 
-    /// Computes the union of all clocks added to the `TClock`.
-    ///
-    /// # Examples
-    /// ```
-    /// use threshold::{vclock, *};
-    ///
-    /// let vclock_0 = vclock::from_seqs(vec![10, 5, 5]);
-    /// let vclock_1 = vclock::from_seqs(vec![8, 10, 6]);
-    ///
-    /// let mut tclock = TClock::new();
-    /// tclock.add(vclock_0);
-    /// tclock.add(vclock_1);
-    /// assert_eq!(tclock.union(), vclock::from_seqs(vec![10, 10, 6]));
-    /// ```
-    pub fn union(&self) -> VClock<T> {
-        self.threshold_union(1)
-    }
+fn event_count<E: EventSet>(
+    eset: E,
+) -> impl Iterator<Item = (u64, EventCount)> {
+    // get events
+    let (left, right) = eset.events();
 
-    /// Computes the intersection of all clocks added to the `TClock`.
-    ///
-    /// # Examples
-    /// ```
-    /// use threshold::{vclock, *};
-    ///
-    /// let vclock_0 = vclock::from_seqs(vec![10, 5, 5]);
-    /// let vclock_1 = vclock::from_seqs(vec![8, 10, 6]);
-    ///
-    /// let mut tclock = TClock::new();
-    /// tclock.add(vclock_0);
-    /// tclock.add(vclock_1);
-    /// assert_eq!(tclock.intersection(), vclock::from_seqs(vec![8, 5, 5]));
-    /// ```
-    pub fn intersection(&self) -> VClock<T> {
-        self.threshold_union(self.clock_count)
-    }
+    // compute left event count
+    let left_count = std::iter::once(left).map(|x| (x, (1, 0)));
+
+    // compute right events count
+    let right_count = right.into_iter().map(|x| (x, (0, 1)));
+
+    // chain both
+    left_count.chain(right_count)
 }
