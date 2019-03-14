@@ -44,7 +44,7 @@ impl<E: Ord, C: Count> MultiSet<E, C> {
         }
     }
 
-    /// Adds several elements to the `MultiSet`.
+    /// Adds several elements (each with an associated count) to the `MultiSet`.
     ///
     /// # Examples
     /// ```
@@ -63,7 +63,7 @@ impl<E: Ord, C: Count> MultiSet<E, C> {
         }
     }
 
-    /// Adds a single element to the `MultiSet`.
+    /// Adds a single element (with an associated count) to the `MultiSet`.
     ///
     /// # Examples
     /// ```
@@ -81,7 +81,7 @@ impl<E: Ord, C: Count> MultiSet<E, C> {
         count.add(by);
     }
 
-    /// Returns the number of occurrences of an element.
+    /// Returns the `Count` of an element.
     ///
     /// # Examples
     /// ```

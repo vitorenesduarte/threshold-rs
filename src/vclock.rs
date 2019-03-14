@@ -25,9 +25,9 @@ use std::iter::FromIterator;
 pub type VClock<A> = Clock<A, MaxInt>;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Dot<T: Actor> {
+pub struct Dot<A: Actor> {
     /// Actor identifer
-    actor: T,
+    actor: A,
     /// Sequence number
     seq: u64,
 }
@@ -164,6 +164,7 @@ impl<A: Actor, E: EventSet> Clock<A, E> {
             .get(&dot.actor)
             .map_or(false, |eset| eset.is_event(&dot.seq))
     }
+
     /// Merges vector clock `other` passed as argument into `self`.
     /// After merge, all events in `other` are events in `self`.
     ///
@@ -192,7 +193,7 @@ impl<A: Actor, E: EventSet> Clock<A, E> {
     }
 }
 
-/// Creates a new `Clock` from a list of sequences.
+/// Creates a new vector clock from a list of sequences.
 /// `u64` are used as actor identifers and:
 /// - the first sequence is mapped to actor number 0
 /// - the last sequence is mapped to actor number #sequences - 1
@@ -228,7 +229,7 @@ impl<A: Actor, E: EventSet> IntoIterator for Clock<A, E> {
     type Item = (A, E);
     type IntoIter = IntoIter<A, E>;
 
-    /// Returns a `Clock` into iterator.
+    /// Returns a `Clock` into-iterator.
     ///
     /// # Examples
     /// ```
