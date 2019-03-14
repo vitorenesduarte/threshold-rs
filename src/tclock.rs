@@ -120,9 +120,7 @@ impl<A: Actor> TClock<A, MaxSet> {
     /// assert_eq!(tclock.threshold_union(3), vclock_t3);
     /// ```
     pub fn threshold_union(&self, threshold: u64) -> VClock<A> {
-        let mut map = HashMap::new();
-
-        for (actor, tset) in self.occurrences.iter() {
+        let iter = self.occurrences.iter().map(|(actor, tset)| {
             let mut total_count = 0;
 
             // get the highest sequence that passes the threshold
@@ -148,11 +146,10 @@ impl<A: Actor> TClock<A, MaxSet> {
                     |(&seq, _)| MaxSet::from_event(seq),
                 );
 
-            // insert it in the map
-            map.insert(actor.clone(), seq);
-        }
+            (actor.clone(), seq)
+        });
 
-        VClock::from(map)
+        VClock::from(iter)
     }
 }
 
