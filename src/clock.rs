@@ -211,9 +211,9 @@ impl<A: Actor, E: EventSet> Clock<A, E> {
 ///
 /// # Examples
 /// ```
-/// use threshold::{vclock, *};
+/// use threshold::{clock, *};
 ///
-/// let clock = vclock::vclock_from_seqs(vec![10, 20]);
+/// let clock = clock::vclock_from_seqs(vec![10, 20]);
 /// assert!(clock.is_element(&Dot::new(&0, 10)));
 /// assert!(clock.is_element(&Dot::new(&1, 20)));
 /// ```

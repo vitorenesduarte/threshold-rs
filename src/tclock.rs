@@ -4,17 +4,17 @@
 //!
 //! # Examples
 //! ```
-//! use threshold::{vclock, *};
+//! use threshold::{clock, *};
 //!
-//! let vclock_0 = vclock::vclock_from_seqs(vec![10, 5, 5]);
-//! let vclock_1 = vclock::vclock_from_seqs(vec![8, 10, 6]);
+//! let vclock_0 = clock::vclock_from_seqs(vec![10, 5, 5]);
+//! let vclock_1 = clock::vclock_from_seqs(vec![8, 10, 6]);
 //!
 //! let mut tclock = TClock::new();
 //! tclock.add(vclock_0);
 //! tclock.add(vclock_1);
 //!
-//! let vclock_t1 = vclock::vclock_from_seqs(vec![10, 10, 6]);
-//! let vclock_t2 = vclock::vclock_from_seqs(vec![8, 5, 5]);
+//! let vclock_t1 = clock::vclock_from_seqs(vec![10, 10, 6]);
+//! let vclock_t2 = clock::vclock_from_seqs(vec![8, 5, 5]);
 //!
 //! assert_eq!(tclock.threshold_union(1), vclock_t1);
 //! assert_eq!(tclock.threshold_union(2), vclock_t2);
@@ -45,11 +45,11 @@ impl<A: Actor, E: EventSet> TClock<A, E> {
     ///
     /// # Examples
     /// ```
-    /// use threshold::{vclock, *};
+    /// use threshold::{clock, *};
     ///
     /// let mut tset = TClock::new();
     ///
-    /// let vclock = vclock::vclock_from_seqs(1..10);
+    /// let vclock = clock::vclock_from_seqs(1..10);
     /// tset.add(vclock);
     /// ```
     pub fn add(&mut self, clock: Clock<A, E>) {
@@ -101,19 +101,19 @@ impl<A: Actor> TClock<A, MaxSet> {
     ///
     /// # Examples
     /// ```
-    /// use threshold::{vclock, *};
-    /// let vclock_0 = vclock::vclock_from_seqs(vec![10, 5, 5]);
-    /// let vclock_1 = vclock::vclock_from_seqs(vec![8, 10, 6]);
-    /// let vclock_2 = vclock::vclock_from_seqs(vec![9, 8, 7]);
+    /// use threshold::{clock, *};
+    /// let vclock_0 = clock::vclock_from_seqs(vec![10, 5, 5]);
+    /// let vclock_1 = clock::vclock_from_seqs(vec![8, 10, 6]);
+    /// let vclock_2 = clock::vclock_from_seqs(vec![9, 8, 7]);
     ///
     /// let mut tclock = TClock::new();
     /// tclock.add(vclock_0);
     /// tclock.add(vclock_1);
     /// tclock.add(vclock_2);
     ///
-    /// let vclock_t1 = vclock::vclock_from_seqs(vec![10, 10, 7]);
-    /// let vclock_t2 = vclock::vclock_from_seqs(vec![9, 8, 6]);
-    /// let vclock_t3 = vclock::vclock_from_seqs(vec![8, 5, 5]);
+    /// let vclock_t1 = clock::vclock_from_seqs(vec![10, 10, 7]);
+    /// let vclock_t2 = clock::vclock_from_seqs(vec![9, 8, 6]);
+    /// let vclock_t3 = clock::vclock_from_seqs(vec![8, 5, 5]);
     ///
     /// assert_eq!(tclock.threshold_union(1), vclock_t1);
     /// assert_eq!(tclock.threshold_union(2), vclock_t2);

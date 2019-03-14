@@ -21,20 +21,20 @@ Assume `threshold(u64, X) -> Option<u64>` where the first argument is the thresh
 
 #### Code Example
 ```rust
-use threshold::{vclock, *};
+use threshold::{clock, *};
 
-let vclock_0 = vclock::from_seqs(vec![10, 5, 5]);
-let vclock_1 = vclock::from_seqs(vec![8, 10, 6]);
-let vclock_2 = vclock::from_seqs(vec![9, 8, 7]);
+let vclock_0 = clock::vclock_from_seqs(vec![10, 5, 5]);
+let vclock_1 = clock::vclock_from_seqs(vec![8, 10, 6]);
+let vclock_2 = clock::vclock_from_seqs(vec![9, 8, 7]);
 
 let mut tclock = TClock::new();
 tclock.add(vclock_0);
 tclock.add(vclock_1);
 tclock.add(vclock_2);
 
-let vclock_t1 = vclock::from_seqs(vec![10, 10, 7]);
-let vclock_t2 = vclock::from_seqs(vec![9, 8, 6]);
-let vclock_t3 = vclock::from_seqs(vec![8, 5, 5]);
+let vclock_t1 = clock::vclock_from_seqs(vec![10, 10, 7]);
+let vclock_t2 = clock::vclock_from_seqs(vec![9, 8, 6]);
+let vclock_t3 = clock::vclock_from_seqs(vec![8, 5, 5]);
 
 assert_eq!(tclock.threshold_union(1), vclock_t1);
 assert_eq!(tclock.threshold_union(2), vclock_t2);
