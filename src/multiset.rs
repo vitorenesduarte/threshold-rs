@@ -37,7 +37,7 @@ impl<E: Ord, C: Count> MultiSet<E, C> {
         }
     }
 
-    /// Creates a new `MultiSet` from a vector of tuples (elem, elem count).
+    /// Creates a new `MultiSet` from an iterator of tuples (elem, elem count).
     ///
     /// # Examples
     /// ```

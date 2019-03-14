@@ -15,11 +15,11 @@ pub mod vclock;
 pub mod multiset;
 
 // This module contains the implementation of Threshold Clock.
-// pub mod tclock;
+pub mod tclock;
 
 // Top-level re-exports.
 pub use crate::max_set::MaxSet;
 pub use crate::multiset::MultiSet;
-// pub use crate::tclock::TClock;
+pub use crate::tclock::TClock;
 pub use crate::traits::{Actor, Count, EventSet};
 pub use crate::vclock::{Clock, Dot, VClock};
