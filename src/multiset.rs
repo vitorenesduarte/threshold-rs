@@ -38,6 +38,15 @@ impl<E: Ord, C: Count> MultiSet<E, C> {
     }
 
     /// Creates a new `MultiSet` from a vector of tuples (elem, elem count).
+    ///
+    /// # Examples
+    /// ```
+    /// use threshold::*;
+    ///
+    /// let mset = MultiSet::from(vec![(17, 1), (23, 2)]);
+    /// assert_eq!(mset.count(&17), 1);
+    /// assert_eq!(mset.count(&23), 2);
+    /// ```
     pub fn from<I: IntoIterator<Item = (E, C)>>(iter: I) -> Self {
         MultiSet {
             occurrences: BTreeMap::from_iter(iter),

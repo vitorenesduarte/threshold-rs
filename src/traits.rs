@@ -48,9 +48,9 @@ pub trait EventSet: IntoIterator + Clone + Debug {
     fn from_event(event: u64) -> Self;
 
     /// Creates a new instance from several `events`.
-    fn from_events(events: Vec<u64>) -> Self {
+    fn from_events<I: IntoIterator<Item = u64>>(iter: I) -> Self {
         let mut eset = Self::new();
-        for event in events {
+        for event in iter {
             eset.add_event(event);
         }
         eset

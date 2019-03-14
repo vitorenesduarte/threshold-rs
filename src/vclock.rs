@@ -58,6 +58,18 @@ impl<A: Actor, E: EventSet> Clock<A, E> {
 
     /// Creates a `Clock` from an iterator of tuples (actor identifier and event
     /// set).
+    ///
+    /// # Examples
+    /// ```
+    /// use threshold::*;
+    ///
+    /// let a = ("A", MaxSet::from_event(10));
+    /// let b = ("B", MaxSet::from_event(20));
+    /// let vclock = Clock::from(vec![a, b]);
+    ///
+    /// assert!(vclock.is_element(&Dot::new(&"A", 9)));
+    /// assert!(!vclock.is_element(&Dot::new(&"A", 11)));
+    /// ```
     pub fn from<I: IntoIterator<Item = (A, E)>>(iter: I) -> Self {
         Clock {
             clock: HashMap::from_iter(iter),
