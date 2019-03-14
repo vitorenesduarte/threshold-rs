@@ -51,18 +51,17 @@ pub struct Clock<A: Actor, E: EventSet> {
 impl<A: Actor, E: EventSet> Clock<A, E> {
     /// Returns a new `Clock` instance.
     pub fn new() -> Self {
-        Self::from_map(HashMap::new())
+        Clock {
+            clock: HashMap::new(),
+        }
     }
 
-    /// Creates a `Clock` from a map from actor identifier to its event set.
-    pub fn from_map(clock: HashMap<A, E>) -> Self {
-        Clock { clock }
-    }
-
-    /// Creates a `Clock` from a vector of tuples (actor identifier and event
+    /// Creates a `Clock` from an iterator of tuples (actor identifier and event
     /// set).
-    pub fn from_vec(clock: Vec<(A, E)>) -> Self {
-        Self::from_map(clock.into_iter().collect())
+    pub fn from<I: IntoIterator<Item = (A, E)>>(iter: I) -> Self {
+        Clock {
+            clock: HashMap::from_iter(iter),
+        }
     }
 
     /// Returns a new `Dot` for the `actor` while updating the clock.
@@ -207,12 +206,11 @@ impl<A: Actor, E: EventSet> Clock<A, E> {
 /// assert!(clock.is_element(&Dot::new(&1, 20)));
 /// ```
 pub fn vclock_from_seqs<I: IntoIterator<Item = u64>>(iter: I) -> VClock<u64> {
-    let clock = HashMap::from_iter(
+    Clock::from(
         iter.into_iter()
             .enumerate()
             .map(|(actor, seq)| (actor as u64, MaxSet::from_event(seq))),
-    );
-    Clock::from_map(clock)
+    )
 }
 
 pub struct IntoIter<A: Actor, E: EventSet>(hash_map::IntoIter<A, E>);

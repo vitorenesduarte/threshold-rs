@@ -4,12 +4,12 @@ use quickcheck::{Arbitrary, Gen};
 impl<E: Ord + Arbitrary, C: Count + Arbitrary> Arbitrary for MultiSet<E, C> {
     fn arbitrary<G: Gen>(g: &mut G) -> MultiSet<E, C> {
         let vec: Vec<(E, C)> = Arbitrary::arbitrary(g);
-        MultiSet::from_vec(vec)
+        MultiSet::from(vec)
     }
 
     fn shrink(&self) -> Box<Iterator<Item = MultiSet<E, C>>> {
         let vec: Vec<(E, C)> = self.clone().into_iter().collect();
-        Box::new(vec.shrink().map(|v| MultiSet::from_vec(v)))
+        Box::new(vec.shrink().map(|v| MultiSet::from(v)))
     }
 }
 
@@ -40,12 +40,12 @@ impl<A: Actor + Arbitrary> Arbitrary for Dot<A> {
 impl<A: Actor + Arbitrary, E: EventSet + Arbitrary> Arbitrary for Clock<A, E> {
     fn arbitrary<G: Gen>(g: &mut G) -> Clock<A, E> {
         let vec: Vec<(A, E)> = Arbitrary::arbitrary(g);
-        Clock::from_vec(vec)
+        Clock::from(vec)
     }
 
     fn shrink(&self) -> Box<Iterator<Item = Clock<A, E>>> {
         let vec: Vec<(A, E)> = self.clone().into_iter().collect();
-        Box::new(vec.shrink().map(|v| Clock::from_vec(v)))
+        Box::new(vec.shrink().map(|v| Clock::from(v)))
     }
 }
 

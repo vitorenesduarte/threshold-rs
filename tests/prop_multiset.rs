@@ -11,7 +11,7 @@ fn singleton(x: String, y: String) -> TestResult {
         return TestResult::discard();
     }
 
-    let mset: MultiSet<String, u64> = MultiSet::from_vec(vec![(x.clone(), 1)]);
+    let mset: MultiSet<String, u64> = MultiSet::from(vec![(x.clone(), 1)]);
 
     // prop: only the element in the singleton has count 1
     let prop = mset.count(&x) == 1 && mset.count(&y) == 0;
