@@ -81,10 +81,10 @@ impl IntoIterator for MaxSet {
     /// ```
     /// use threshold::*;
     ///
-    /// let mut max_set = MaxSet::new();
-    /// max_set.add_event(3);
+    /// let mut maxset = MaxSet::new();
+    /// maxset.add_event(3);
     ///
-    /// let mut iter = max_set.into_iter();
+    /// let mut iter = maxset.into_iter();
     /// assert_eq!(iter.next(), Some(1));
     /// assert_eq!(iter.next(), Some(2));
     /// assert_eq!(iter.next(), Some(3));

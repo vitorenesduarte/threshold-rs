@@ -6,7 +6,7 @@ mod traits;
 mod arbitrary;
 
 // This module contains the implementation of a Max Set.
-pub mod max_set;
+pub mod maxset;
 
 // This module contains the implementation of a Clock.
 pub mod clock;
@@ -19,7 +19,7 @@ pub mod tclock;
 
 // Top-level re-exports.
 pub use crate::clock::{Clock, Dot, VClock};
-pub use crate::max_set::MaxSet;
+pub use crate::maxset::MaxSet;
 pub use crate::multiset::MultiSet;
 pub use crate::tclock::TClock;
 pub use crate::traits::{Actor, Count, EventSet};
