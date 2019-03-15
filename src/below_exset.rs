@@ -99,7 +99,7 @@ impl EventSet for BelowExSet {
     fn add_event(&mut self, event: u64) {
         match event.cmp(&self.max) {
             Ordering::Less => {
-                // remove from exceptions
+                // remove from exceptions (it might not be an exception though)
                 self.exs.remove(&event);
             }
             Ordering::Greater => {
@@ -110,7 +110,7 @@ impl EventSet for BelowExSet {
                 self.max = event;
             }
             Ordering::Equal => {
-                // nothing to do, already an event
+                // nothing to do since it is already an event
             }
         }
     }
@@ -187,32 +187,26 @@ impl EventSet for BelowExSet {
     /// assert_eq!(below_exset.events(), (7, vec![6]));
     /// ```
     fn join(&mut self, other: &Self) {
-        //
-        // - the new max value is the max of both max values
-        // - the new exceptions are a subset of the union of exceptions sets
-        //  - this means we don't create new exceptions
-        //  - of those exceptions in the union, we keep the ones that: 1. are
-        //    bigger than the min of both max values OR 2. are in the
-        //    intersection of both exceptions sets
-        //  - in a more formal way, the final set of exceptions is given by:
-        // {ex ∈ A.exs ∪ B.exs | ex > min(A.max, B.max) \/ ex ∈ A.exs ∩ B.exs }
+        // the new exceptions are a subset of the union of exceptions sets
+        // - this means that the join does not create new exceptions
         let exs_before = self.exs.clone();
 
-        // keep local exceptions that are:
-        // - higher than the `other` highest event
-        // - also an exception
+        // from the local exceptions, we keep the ones that:
+        // - are bigger than the remote max OR
+        // - are a remote exception
         self.exs
             .retain(|&ex| ex > other.max || other.exs.contains(&ex));
 
-        // add remote exception that are:
-        // - higher than current max
-        // - part of `exceptions_before`
+        // from the remote exceptions, we keep the ones that:
+        // - are bigger than the local max OR
+        // - are a local exception
         for &ex in other.exs.iter() {
             if ex > self.max || exs_before.contains(&ex) {
                 self.exs.insert(ex);
             }
         }
 
+        // the new max value is the max of both max values
         self.max = std::cmp::max(self.max, other.max);
     }
 }
