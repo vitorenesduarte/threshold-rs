@@ -4,7 +4,7 @@ extern crate quickcheck_macros;
 use threshold::*;
 
 #[quickcheck]
-fn next_dot(actor: String, vclock: VClock<String>) -> bool {
+fn next_dot(actor: Musk, vclock: VClock<Musk>) -> bool {
     let mut vclock = vclock.clone();
     let dot = vclock.next_dot(&actor);
 
@@ -13,7 +13,7 @@ fn next_dot(actor: String, vclock: VClock<String>) -> bool {
 }
 
 #[quickcheck]
-fn add_dot(dot: Dot<String>, vclock: VClock<String>) -> bool {
+fn add_dot(dot: Dot<Musk>, vclock: VClock<Musk>) -> bool {
     let mut vclock = vclock.clone();
     vclock.add_dot(&dot);
 
@@ -22,7 +22,7 @@ fn add_dot(dot: Dot<String>, vclock: VClock<String>) -> bool {
 }
 
 #[quickcheck]
-fn join(vclock_a: VClock<String>, vclock_b: VClock<String>) -> bool {
+fn join(vclock_a: VClock<Musk>, vclock_b: VClock<Musk>) -> bool {
     let mut vclock_a = vclock_a.clone();
     vclock_a.join(&vclock_b);
 

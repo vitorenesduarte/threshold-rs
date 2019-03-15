@@ -21,6 +21,7 @@ pub mod multiset;
 pub mod tclock;
 
 // Top-level re-exports.
+pub use crate::arbitrary::Musk;
 pub use crate::below_exset::BelowExSet;
 pub use crate::clock::{BEClock, Clock, Dot, VClock};
 pub use crate::maxset::MaxSet;
