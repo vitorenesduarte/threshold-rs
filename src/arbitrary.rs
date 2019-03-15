@@ -1,6 +1,30 @@
 use crate::*;
 use quickcheck::{Arbitrary, Gen};
 
+/// This enum should allow tests to be more effective since they only work on a
+/// small number of actors.
+#[derive(Clone, Hash, PartialEq, Eq, Debug)]
+pub enum Musk {
+    A,
+    B,
+    C,
+}
+
+impl Arbitrary for Musk {
+    fn arbitrary<G: Gen>(g: &mut G) -> Musk {
+        let which: u64 = Arbitrary::arbitrary(g);
+        match which % 3 {
+            0 => Musk::A,
+            1 => Musk::B,
+            _ => Musk::C,
+        }
+    }
+
+    fn shrink(&self) -> Box<Iterator<Item = Musk>> {
+        Box::new(std::iter::empty::<Musk>())
+    }
+}
+
 impl<E: Ord + Arbitrary, C: Count + Arbitrary> Arbitrary for MultiSet<E, C> {
     fn arbitrary<G: Gen>(g: &mut G) -> MultiSet<E, C> {
         let vec: Vec<(E, C)> = Arbitrary::arbitrary(g);
