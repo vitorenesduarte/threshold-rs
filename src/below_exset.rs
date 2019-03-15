@@ -187,23 +187,17 @@ impl EventSet for BelowExSet {
     /// assert_eq!(below_exset.events(), (7, vec![6]));
     /// ```
     fn join(&mut self, other: &Self) {
+        let before = self.clone();
+
         // the new exceptions are a subset of the union of exceptions sets
         // - this means that the join does not create new exceptions
-        let exs_before = self.exs.clone();
+        //
+        // keep the local exceptions that are not remote events
+        self.exs.retain(|ex| !other.is_event(ex));
 
-        // from the local exceptions, we keep the ones that:
-        // - are bigger than the remote max OR
-        // - are a remote exception
-        self.exs
-            .retain(|&ex| ex > other.max || other.exs.contains(&ex));
-
-        // from the remote exceptions, we keep the ones that:
-        // - are bigger than the local max OR
-        // - are a local exception
-        for &ex in other.exs.iter() {
-            if ex > self.max || exs_before.contains(&ex) {
-                self.exs.insert(ex);
-            }
+        // keep the remote exceptions that are not local events
+        for ex in other.exs.iter().filter(|ex| !before.is_event(ex)) {
+            self.exs.insert(*ex);
         }
 
         // the new max value is the max of both max values
