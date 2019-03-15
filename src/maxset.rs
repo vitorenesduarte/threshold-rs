@@ -3,6 +3,19 @@
 //! # Examples
 //! ```
 //! use threshold::*;
+//!
+//! let mut maxset = MaxSet::new();
+//! assert_eq!(maxset.next_event(), 1);
+//! assert!(maxset.is_event(&1));
+//! assert!(!maxset.is_event(&2));
+//!
+//! let other = MaxSet::from_event(3);
+//! assert!(other.is_event(&1));
+//! assert!(other.is_event(&2));
+//! assert!(other.is_event(&3));
+//!
+//! maxset.join(&other);
+//! assert!(maxset.is_event(&3));
 //! ```
 
 use crate::EventSet;
@@ -20,32 +33,92 @@ impl EventSet for MaxSet {
     }
 
     /// Creates a new instance from `event`.
+    ///
+    /// # Examples
+    /// ```
+    /// use threshold::*;
+    ///
+    /// let maxset = MaxSet::from_event(10);
+    /// assert!(maxset.is_event(&10));
+    /// ```
     fn from_event(event: u64) -> Self {
         MaxSet { max: event }
     }
 
     /// Generates the next event.
+    ///
+    /// # Examples
+    /// ```
+    /// use threshold::*;
+    ///
+    /// let mut maxset = MaxSet::new();
+    /// assert_eq!(maxset.next_event(), 1);
+    /// assert_eq!(maxset.next_event(), 2);
+    /// ```
     fn next_event(&mut self) -> u64 {
         self.max += 1;
         self.max
     }
 
     /// Adds an event to the set.
+    ///
+    /// # Examples
+    /// ```
+    /// use threshold::*;
+    ///
+    /// let mut maxset = MaxSet::new();
+    /// assert!(!maxset.is_event(&9));
+    /// assert!(!maxset.is_event(&10));
+    ///
+    /// maxset.add_event(10);
+    /// assert!(maxset.is_event(&9));
+    /// assert!(maxset.is_event(&10));
+    /// ```
     fn add_event(&mut self, event: u64) {
         self.max = std::cmp::max(self.max, event);
     }
 
     /// Checks if an event is part of the set.
+    ///
+    /// # Examples
+    /// ```
+    /// use threshold::*;
+    ///
+    /// let mut maxset = MaxSet::new();
+    /// let event = maxset.next_event();
+    /// assert!(maxset.is_event(&event));
+    /// ```
     fn is_event(&self, event: &u64) -> bool {
         *event <= self.max
     }
 
     /// Returns all events seen.
+    ///
+    /// # Examples
+    /// ```
+    /// use threshold::*;
+    ///
+    /// let mut maxset = MaxSet::new();
+    /// maxset.add_event(2);
+    /// maxset.add_event(4);
+    /// assert_eq!(maxset.events(), (4, vec![]));
+    /// ```
     fn events(&self) -> (u64, Vec<u64>) {
         (self.max, vec![])
     }
 
     /// Merges `other` `MaxSet` into `self`.
+    ///
+    /// # Examples
+    /// ```
+    /// use threshold::*;
+    ///
+    /// let mut maxset = MaxSet::from_event(10);
+    /// assert!(!maxset.is_event(&20));
+    ///
+    /// maxset.join(&MaxSet::from_event(20));
+    /// assert!(maxset.is_event(&20));
+    /// ```
     fn join(&mut self, other: &Self) {
         self.add_event(other.max);
     }
@@ -63,8 +136,10 @@ impl Iterator for IntoIter {
 
     fn next(&mut self) -> Option<Self::Item> {
         if self.current == self.max {
+            // we've reached the end of the iterator
             None
         } else {
+            // compute next value and return it
             self.current += 1;
             Some(self.current)
         }
