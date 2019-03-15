@@ -98,8 +98,10 @@ impl EventSet for MaxSet {
     /// ```
     /// use threshold::*;
     ///
-    /// let maxset = MaxSet::from_event(10);
-    /// assert_eq!(maxset.events(), (10, vec![]));
+    /// let mut maxset = MaxSet::new();
+    /// maxset.add_event(2);
+    /// maxset.add_event(4);
+    /// assert_eq!(maxset.events(), (4, vec![]));
     /// ```
     fn events(&self) -> (u64, Vec<u64>) {
         (self.max, vec![])
@@ -134,8 +136,10 @@ impl Iterator for IntoIter {
 
     fn next(&mut self) -> Option<Self::Item> {
         if self.current == self.max {
+            // we've reached the end of the iterator
             None
         } else {
+            // compute next value and return it
             self.current += 1;
             Some(self.current)
         }
