@@ -3,6 +3,19 @@
 //! # Examples
 //! ```
 //! use threshold::*;
+//!
+//! let mut maxset = MaxSet::new();
+//! assert_eq!(maxset.next_event(), 1);
+//! assert!(maxset.is_event(&1));
+//! assert!(!maxset.is_event(&2));
+//!
+//! let other = MaxSet::from_event(3);
+//! assert!(other.is_event(&1));
+//! assert!(other.is_event(&2));
+//! assert!(other.is_event(&3));
+//!
+//! maxset.join(&other);
+//! assert!(maxset.is_event(&3));
 //! ```
 
 use crate::EventSet;
