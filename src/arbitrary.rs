@@ -25,6 +25,18 @@ impl Arbitrary for MaxSet {
     }
 }
 
+impl Arbitrary for BelowExSet {
+    fn arbitrary<G: Gen>(g: &mut G) -> BelowExSet {
+        let events: Vec<u64> = Arbitrary::arbitrary(g);
+        BelowExSet::from_events(events)
+    }
+
+    fn shrink(&self) -> Box<Iterator<Item = BelowExSet>> {
+        let vec: Vec<u64> = self.clone().into_iter().collect();
+        Box::new(vec.shrink().map(|v| BelowExSet::from_events(v)))
+    }
+}
+
 impl<A: Actor + Arbitrary> Arbitrary for Dot<A> {
     fn arbitrary<G: Gen>(g: &mut G) -> Dot<A> {
         let actor: A = Arbitrary::arbitrary(g);
