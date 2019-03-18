@@ -20,16 +20,17 @@ mod gen {
     const ELEM_COUNT: u32 = 100;
     const ELEM_SIZE: u32 = 2000;
 
-    pub fn multiset() -> (MultiSet<String>, u64) {
+    pub fn multiset() -> (MultiSet<String, u64>, u64) {
         let mut rng = StdRng::seed_from_u64(SEED);
         let mut multiset = MultiSet::new();
         let elems = elements(&mut rng);
 
         for _ in 0..ADD_COUNT {
             let elem_count = rng.gen_range(1, ELEM_COUNT) as usize;
-            let set: Vec<String> = elems
+            let set: Vec<(String, u64)> = elems
                 .choose_multiple(&mut rng, elem_count)
                 .cloned()
+                .map(|x| (x, 1))
                 .collect();
             multiset.add(set);
         }
