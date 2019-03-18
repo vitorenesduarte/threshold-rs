@@ -23,6 +23,7 @@
 use crate::EventSet;
 use std::cmp::Ordering;
 use std::collections::HashSet;
+use std::iter::FromIterator;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct BelowExSet {
@@ -202,6 +203,30 @@ impl EventSet for BelowExSet {
 
         // the new max value is the max of both max values
         self.max = std::cmp::max(self.max, other.max);
+    }
+}
+
+impl BelowExSet {
+    /// Creates a new instance from the highest event, and a sequence of
+    /// exceptions.
+    ///
+    /// # Examples
+    /// ```
+    /// use threshold::*;
+    ///
+    /// let below_exset = BelowExSet::from(5, vec![1, 3]);
+    /// assert!(!below_exset.is_event(&1));
+    /// assert!(below_exset.is_event(&2));
+    /// assert!(!below_exset.is_event(&3));
+    /// assert!(below_exset.is_event(&4));
+    /// assert!(below_exset.is_event(&5));
+    /// assert!(!below_exset.is_event(&6));
+    /// ```
+    pub fn from<I: IntoIterator<Item = u64>>(max: u64, iter: I) -> Self {
+        BelowExSet {
+            max,
+            exs: HashSet::from_iter(iter),
+        }
     }
 }
 
