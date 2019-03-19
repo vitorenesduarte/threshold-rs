@@ -53,6 +53,9 @@ impl Arbitrary for MaxSet {
 impl Arbitrary for BelowExSet {
     fn arbitrary<G: Gen>(g: &mut G) -> BelowExSet {
         let events: Vec<u64> = Arbitrary::arbitrary(g);
+        // reduce the number of possible events
+        let events: Vec<u64> =
+            events.into_iter().filter(|&x| x <= 20).collect();
         BelowExSet::from_events(events)
     }
 
@@ -66,7 +69,8 @@ impl<A: Actor + Arbitrary> Arbitrary for Dot<A> {
     fn arbitrary<G: Gen>(g: &mut G) -> Dot<A> {
         let actor: A = Arbitrary::arbitrary(g);
         let seq: u64 = Arbitrary::arbitrary(g);
-        let seq = seq + 1; // ensure it's never 0
+        // ensure `seq` is never 0
+        let seq = seq + 1;
         Dot::new(&actor, seq)
     }
 
