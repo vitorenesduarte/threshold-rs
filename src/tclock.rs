@@ -79,7 +79,7 @@ impl<A: Actor, E: EventSet> TClock<A, E> {
 
 impl<A: Actor> TClock<A, MaxSet> {
     /// Computes the [threshold-union](https://vitorenes.org/post/2018/11/threshold-union/)
-    /// of all clocks added to the `TClock`.
+    /// of all `VClock` added to the `TClock`.
     ///
     /// Assume multiset `X` is `{10: 1, 8: 2, 6: 3, 5: 1}`.
     /// This means that event `10` was seen once, event `8` twice, and so on.
@@ -121,22 +121,21 @@ impl<A: Actor> TClock<A, MaxSet> {
     /// ```
     pub fn threshold_union(&self, threshold: u64) -> VClock<A> {
         let iter = self.occurrences.iter().map(|(actor, tset)| {
-            let mut total_count = 0;
+            let mut total_pos = 0;
 
             // get the highest sequence that passes the threshold
             let seq = tset
                 .iter()
                 .rev()
-                .skip_while(|(_, &(count, _))| {
-                    // `total_count` records the implicit number of
-                    // observations: since we are iterating from the highest
-                    // event to the lowest, and the observation of event X
-                    // counts as an observation of event Y when X > Y, we
-                    // can simply accumulate all observations in `total_count`
-                    // and stop the `skip_while` once `total_count` passes the
-                    // threshold
-                    total_count += count;
-                    total_count < threshold
+                .skip_while(|(_, &(pos, _))| {
+                    // `total_pos` records the implicit number of observations:
+                    // since we are iterating from the highest event to the
+                    // lowest, and the observation of event X counts as an
+                    // observation of event Y when X > Y, we can simply
+                    // accumulate all observations in `total_pos` and stop the
+                    // `skip_while` once `total_pos` passes the threshold
+                    total_pos += pos;
+                    total_pos < threshold
                 })
                 .next()
                 // if there is an event that passes the threshold, return it
@@ -150,6 +149,110 @@ impl<A: Actor> TClock<A, MaxSet> {
         });
 
         VClock::from(iter)
+    }
+}
+
+impl<A: Actor> TClock<A, BelowExSet> {
+    /// Computes the [threshold-union](https://vitorenes.org/post/2018/11/threshold-union/)
+    /// of all `BEClock` added to the `TClock`.
+    ///
+    /// # Examples
+    /// ```
+    /// use threshold::*;
+    ///
+    /// let mut clock_a = BEClock::new();
+    /// clock_a.add_dot(&Dot::new(&Musk::B, 5));
+    /// clock_a.add_dot(&Dot::new(&Musk::B, 6));
+    ///
+    /// let mut clock_b = BEClock::new();
+    /// clock_b.add_dot(&Dot::new(&Musk::B, 5));
+    /// clock_b.add_dot(&Dot::new(&Musk::B, 7));
+    ///
+    /// let mut tclock = TClock::new();
+    /// tclock.add(clock_a);
+    /// tclock.add(clock_b);
+    ///
+    /// let mut expected = BEClock::new();
+    /// expected.add_dot(&Dot::new(&Musk::B, 5));
+    ///
+    /// assert_eq!(tclock.threshold_union(2), expected);
+    /// ```
+    pub fn threshold_union(&self, threshold: u64) -> BEClock<A> {
+        let iter = self.occurrences.iter().map(|(actor, tset)| {
+            let mut total_pos = 0;
+
+            // skip until some entry passes the threshold
+            let iter = tset
+                .iter()
+                .rev()
+                .skip_while(|(_, &(pos, _))| {
+                    // `total_pos` records the implicit number of observations:
+                    // since we are iterating from the highest event to the
+                    // lowest, and the observation of event X counts as an
+                    // observation of event Y when X > Y, we can simply
+                    // accumulate all observations in `total_pos` and stop the
+                    // `skip_while` once `total_pos` passes the threshold
+                    total_pos += pos;
+                    total_pos < threshold
+                })
+                // had to collect here so that the borrow of `total_pos` ends
+                // TODO can we avoid this?
+                .collect::<Vec<_>>();
+            let mut iter = iter.iter().peekable();
+
+            let highest = match iter.next() {
+                None => Ok(0),
+                Some((&seq, &(_, neg))) => {
+                    // check if the highest seq that passes the positive
+                    // threshold is valid, i.e. if it still passes the threshold
+                    // after subtracting the negative votes
+                    if total_pos - neg >= threshold {
+                        // if yes, this is the highest sequence
+                        Ok(seq)
+                    } else {
+                        // if not, the highest sequence may not have received
+                        // any of vote, i.e. it is not in the structure
+                        Err(seq)
+                    }
+                }
+            }
+            .unwrap_or_else(|seq| {
+                let mut candidate = seq - 1;
+                loop {
+                    match iter.peek() {
+                        None => break candidate,
+                        Some((&next_seq, &(pos, neg))) => {
+                            if next_seq == candidate {
+                                iter.next();
+                                total_pos += pos;
+                                if total_pos - neg >= threshold {
+                                    break candidate;
+                                } else {
+                                    candidate -= 1;
+                                }
+                            } else {
+                                break candidate;
+                            }
+                        }
+                    }
+                }
+            });
+
+            let exs = iter.filter_map(|(&seq, &(pos, neg))| {
+                total_pos += pos;
+
+                if neg > total_pos || total_pos - neg < threshold {
+                    Some(seq)
+                } else {
+                    None
+                }
+            });
+
+            let below_exset = BelowExSet::from(highest, exs);
+            (actor.clone(), below_exset)
+        });
+
+        BEClock::from(iter)
     }
 }
 
@@ -167,4 +270,31 @@ fn event_count<E: EventSet>(
 
     // chain both
     left_count.chain(right_count)
+}
+
+#[test]
+fn regression_test() {
+    // Clock { clock: {B: BelowExSet { max: 6, exs: {1, 2, 3, 4} }} }
+    let mut clock_a = BEClock::new();
+    clock_a.add_dot(&Dot::new(&Musk::B, 5));
+    clock_a.add_dot(&Dot::new(&Musk::B, 6));
+
+    // Clock { clock: {B: BelowExSet { max: 7, exs: {1, 2, 3, 4, 6} }} }
+    let mut clock_b = BEClock::new();
+    clock_b.add_dot(&Dot::new(&Musk::B, 5));
+    clock_b.add_dot(&Dot::new(&Musk::B, 7));
+
+    // add both clocks to the threshold clock
+    let mut tclock = TClock::new();
+    tclock.add(clock_a);
+    tclock.add(clock_b);
+
+    // compute the threshold union
+    let clock = tclock.threshold_union(2);
+
+    // create the expected clock
+    let mut expected = BEClock::new();
+    expected.add_dot(&Dot::new(&Musk::B, 5));
+
+    assert_eq!(clock, expected);
 }

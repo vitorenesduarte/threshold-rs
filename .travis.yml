@@ -32,7 +32,8 @@ before_script:
   - cargo install cargo-travis || echo "cargo-travis already installed"
 
 script:
-  - cargo build && cargo test
+  - cargo build
+  - QUICKCHECK_TESTS=5000 cargo test
   - cargo bench
 
 after_success: |
