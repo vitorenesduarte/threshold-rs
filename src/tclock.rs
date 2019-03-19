@@ -217,20 +217,38 @@ impl<A: Actor> TClock<A, BelowExSet> {
                 }
             }
             .unwrap_or_else(|seq| {
+                // if the highest `seq` that passed the positive threshold is
+                // not the highest sequence we are looking for, then any
+                // sequence smaller than `seq` could be the highest sequence
                 let mut candidate = seq - 1;
                 loop {
                     match iter.peek() {
-                        None => break candidate,
+                        None => {
+                            // if the structure is empty, then we've found the
+                            // highest sequence
+                            break candidate;
+                        }
                         Some((&next_seq, &(pos, neg))) => {
                             if next_seq == candidate {
+                                // if the `candidate` is in the structure
+                                // advance the iterator (this is fine since this
+                                // candidate will be never be an exception)
                                 iter.next();
+
+                                // accumulate more positives
                                 total_pos += pos;
+
                                 if total_pos - neg >= threshold {
+                                    // if `candidate` passes the threshold, then
+                                    // we've found the highest sequence
                                     break candidate;
                                 } else {
+                                    // otherwise, try another sequence
                                     candidate -= 1;
                                 }
                             } else {
+                                // if the `candidate` is not in the structure,
+                                // then we've found the highest sequence
                                 break candidate;
                             }
                         }
@@ -238,9 +256,15 @@ impl<A: Actor> TClock<A, BelowExSet> {
                 }
             });
 
+            // compute exceptions:
+            // - if there are any exceptions, they are part of our structure
             let exs = iter.filter_map(|(&seq, &(pos, neg))| {
+                // accumulate more positives
                 total_pos += pos;
 
+                // if `total_pos - neg < threshold`, we have found an exception
+                // - the `neg > total_pos` is here just to prevent `total_pos -
+                //   neg` to overflow
                 if neg > total_pos || total_pos - neg < threshold {
                     Some(seq)
                 } else {
