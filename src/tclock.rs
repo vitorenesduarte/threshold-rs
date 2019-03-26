@@ -220,19 +220,23 @@ impl<A: Actor> TClock<A, BelowExSet> {
                 // if the highest `seq` that passed the positive threshold is
                 // not the highest sequence we are looking for, then any
                 // sequence smaller than `seq` could be the highest sequence
+                // (even if it's not part of our structure)
                 let mut candidate = seq - 1;
                 loop {
                     match iter.peek() {
                         None => {
-                            // if the structure is empty, then we've found the
-                            // highest sequence
+                            // if the structure is empty, then the current
+                            // candidate is the highest sequence
                             break candidate;
                         }
                         Some((&next_seq, &(pos, neg))) => {
                             if next_seq == candidate {
                                 // if the `candidate` is in the structure
-                                // advance the iterator (this is fine since this
-                                // candidate will be never be an exception)
+                                // advance the iterator
+                                // - we can't always advance the iterator
+                                //   because the element we're peeking might be
+                                //   an exception, so we only advance when we're
+                                //   sure that it will never be an exception
                                 iter.next();
 
                                 // accumulate more positives
@@ -243,12 +247,12 @@ impl<A: Actor> TClock<A, BelowExSet> {
                                     // we've found the highest sequence
                                     break candidate;
                                 } else {
-                                    // otherwise, try another sequence
+                                    // otherwise, try a smaller sequence
                                     candidate -= 1;
                                 }
                             } else {
                                 // if the `candidate` is not in the structure,
-                                // then we've found the highest sequence
+                                // then this `candidate` is the highest sequence
                                 break candidate;
                             }
                         }
@@ -262,9 +266,9 @@ impl<A: Actor> TClock<A, BelowExSet> {
                 // accumulate more positives
                 total_pos += pos;
 
-                // if `total_pos - neg < threshold`, we have found an exception
-                // - the `neg > total_pos` is here just to prevent `total_pos -
-                //   neg` to overflow
+                // we have an exception when `total_pos - neg < threshold`
+                // - the `neg > total_pos` is here just to prevent that
+                // `total_pos - neg` overflows
                 if neg > total_pos || total_pos - neg < threshold {
                     Some(seq)
                 } else {
