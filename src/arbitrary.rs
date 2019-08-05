@@ -21,7 +21,7 @@ impl Arbitrary for Musk {
         }
     }
 
-    fn shrink(&self) -> Box<Iterator<Item = Musk>> {
+    fn shrink(&self) -> Box<dyn Iterator<Item = Musk>> {
         Box::new(std::iter::empty::<Musk>())
     }
 }
@@ -32,7 +32,7 @@ impl<E: Ord + Arbitrary, C: Count + Arbitrary> Arbitrary for MultiSet<E, C> {
         MultiSet::from(vec)
     }
 
-    fn shrink(&self) -> Box<Iterator<Item = MultiSet<E, C>>> {
+    fn shrink(&self) -> Box<dyn Iterator<Item = MultiSet<E, C>>> {
         let vec: Vec<(E, C)> = self.clone().into_iter().collect();
         Box::new(vec.shrink().map(|v| MultiSet::from(v)))
     }
@@ -44,7 +44,7 @@ impl Arbitrary for MaxSet {
         MaxSet::from_events(events)
     }
 
-    fn shrink(&self) -> Box<Iterator<Item = MaxSet>> {
+    fn shrink(&self) -> Box<dyn Iterator<Item = MaxSet>> {
         let vec: Vec<u64> = self.clone().into_iter().collect();
         Box::new(vec.shrink().map(|v| MaxSet::from_events(v)))
     }
@@ -59,7 +59,7 @@ impl Arbitrary for BelowExSet {
         BelowExSet::from_events(events)
     }
 
-    fn shrink(&self) -> Box<Iterator<Item = BelowExSet>> {
+    fn shrink(&self) -> Box<dyn Iterator<Item = BelowExSet>> {
         let vec: Vec<u64> = self.clone().into_iter().collect();
         Box::new(vec.shrink().map(|v| BelowExSet::from_events(v)))
     }
@@ -74,7 +74,7 @@ impl<A: Actor + Arbitrary> Arbitrary for Dot<A> {
         Dot::new(&actor, seq)
     }
 
-    fn shrink(&self) -> Box<Iterator<Item = Dot<A>>> {
+    fn shrink(&self) -> Box<dyn Iterator<Item = Dot<A>>> {
         Box::new(std::iter::empty::<Dot<_>>())
     }
 }
@@ -85,7 +85,7 @@ impl<A: Actor + Arbitrary, E: EventSet + Arbitrary> Arbitrary for Clock<A, E> {
         Clock::from(vec)
     }
 
-    fn shrink(&self) -> Box<Iterator<Item = Clock<A, E>>> {
+    fn shrink(&self) -> Box<dyn Iterator<Item = Clock<A, E>>> {
         let vec: Vec<(A, E)> = self.clone().into_iter().collect();
         Box::new(vec.shrink().map(|v| Clock::from(v)))
     }
