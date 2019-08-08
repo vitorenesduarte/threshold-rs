@@ -61,6 +61,7 @@ impl EventSet for BelowExSet {
     }
 
     /// Generates the next event.
+    /// There should be no exceptions when calling this.
     ///
     /// # Examples
     /// ```
@@ -285,7 +286,7 @@ impl IntoIterator for BelowExSet {
         IntoIter {
             current: 0,
             max: self.max,
-            exs: self.exs.clone(),
+            exs: self.exs,
         }
     }
 }

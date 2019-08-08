@@ -5,6 +5,9 @@ mod traits;
 // This module contains the implementation of a Max Set.
 pub mod maxset;
 
+// This module contains the implementation of an Above-Extra Set.
+pub mod above_exset;
+
 // This module contains the implementation of a Below-Exception Set.
 pub mod below_exset;
 
@@ -18,8 +21,9 @@ pub mod multiset;
 pub mod tclock;
 
 // Top-level re-exports.
+pub use crate::above_exset::AboveExSet;
 pub use crate::below_exset::BelowExSet;
-pub use crate::clock::{BEClock, Clock, Dot, VClock};
+pub use crate::clock::{AEClock, BEClock, Clock, Dot, VClock};
 pub use crate::maxset::MaxSet;
 pub use crate::multiset::MultiSet;
 pub use crate::tclock::TClock;
