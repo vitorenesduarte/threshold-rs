@@ -1,5 +1,10 @@
+all: test fmt
+
+test:
+	cargo test
+
 fmt:
-	rustfmt src/* tests/* benches/*
+	rustfmt src/*.rs src/tests/*.rs benches/*
 
 # `cargo install cargo-travis`
 coverage:

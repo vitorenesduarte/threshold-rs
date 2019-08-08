@@ -1,8 +1,6 @@
-#[macro_use(quickcheck)]
-extern crate quickcheck_macros;
-
+use crate::MultiSet;
 use quickcheck::TestResult;
-use threshold::MultiSet;
+use quickcheck_macros::quickcheck;
 
 #[quickcheck]
 fn singleton(x: String, y: String) -> TestResult {

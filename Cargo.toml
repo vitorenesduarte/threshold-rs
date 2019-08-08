@@ -5,11 +5,11 @@ authors = ["Vitor Enes <vitorenesduarte@gmail.com>"]
 edition = "2018"
 
 [dependencies]
-quickcheck = "0.8"
 
 [dev-dependencies]
 criterion = "0.2"
 rand = "0.6"
+quickcheck = "0.8"
 quickcheck_macros = "0.8"
 
 [[bench]]
