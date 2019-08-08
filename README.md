@@ -1,3 +1,5 @@
+[![crates.io](https://img.shields.io/crates/v/threshold.svg)](https://crates.io/crates/threshold)
+[![docs.rs](https://docs.rs/threshold/badge.svg)](https://docs.rs/threshold)
 [![Build Status](https://travis-ci.org/vitorenesduarte/threshold-rs.svg?branch=master)](https://travis-ci.org/vitorenesduarte/threshold-rs)
 [![Coverage Status](https://coveralls.io/repos/github/vitorenesduarte/threshold-rs/badge.svg)](https://coveralls.io/github/vitorenesduarte/threshold-rs)
 
