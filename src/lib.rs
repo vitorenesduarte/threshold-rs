@@ -2,9 +2,6 @@
 // traits.
 mod traits;
 
-// This module contains implementations of quickcheck::Arbitrary trait.
-mod arbitrary;
-
 // This module contains the implementation of a Max Set.
 pub mod maxset;
 
@@ -21,10 +18,13 @@ pub mod multiset;
 pub mod tclock;
 
 // Top-level re-exports.
-pub use crate::arbitrary::Musk;
 pub use crate::below_exset::BelowExSet;
 pub use crate::clock::{BEClock, Clock, Dot, VClock};
 pub use crate::maxset::MaxSet;
 pub use crate::multiset::MultiSet;
 pub use crate::tclock::TClock;
 pub use crate::traits::{Actor, Count, EventSet};
+
+// Tests
+#[cfg(test)]
+mod tests;

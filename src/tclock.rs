@@ -160,20 +160,21 @@ impl<A: Actor> TClock<A, BelowExSet> {
     /// ```
     /// use threshold::*;
     ///
+    /// let b = String::from("B");
     /// let mut clock_a = BEClock::new();
-    /// clock_a.add_dot(&Dot::new(&Musk::B, 5));
-    /// clock_a.add_dot(&Dot::new(&Musk::B, 6));
+    /// clock_a.add_dot(&Dot::new(&b, 5));
+    /// clock_a.add_dot(&Dot::new(&b, 6));
     ///
     /// let mut clock_b = BEClock::new();
-    /// clock_b.add_dot(&Dot::new(&Musk::B, 5));
-    /// clock_b.add_dot(&Dot::new(&Musk::B, 7));
+    /// clock_b.add_dot(&Dot::new(&b, 5));
+    /// clock_b.add_dot(&Dot::new(&b, 7));
     ///
     /// let mut tclock = TClock::new();
     /// tclock.add(clock_a);
     /// tclock.add(clock_b);
     ///
     /// let mut expected = BEClock::new();
-    /// expected.add_dot(&Dot::new(&Musk::B, 5));
+    /// expected.add_dot(&Dot::new(&b, 5));
     ///
     /// assert_eq!(tclock.threshold_union(2), expected);
     /// ```
@@ -302,15 +303,17 @@ fn event_count<E: EventSet>(
 
 #[test]
 fn regression_test() {
+    let b = String::from("B");
+
     // Clock { clock: {B: BelowExSet { max: 6, exs: {1, 2, 3, 4} }} }
     let mut clock_a = BEClock::new();
-    clock_a.add_dot(&Dot::new(&Musk::B, 5));
-    clock_a.add_dot(&Dot::new(&Musk::B, 6));
+    clock_a.add_dot(&Dot::new(&b, 5));
+    clock_a.add_dot(&Dot::new(&b, 6));
 
     // Clock { clock: {B: BelowExSet { max: 7, exs: {1, 2, 3, 4, 6} }} }
     let mut clock_b = BEClock::new();
-    clock_b.add_dot(&Dot::new(&Musk::B, 5));
-    clock_b.add_dot(&Dot::new(&Musk::B, 7));
+    clock_b.add_dot(&Dot::new(&b, 5));
+    clock_b.add_dot(&Dot::new(&b, 7));
 
     // add both clocks to the threshold clock
     let mut tclock = TClock::new();
@@ -322,7 +325,7 @@ fn regression_test() {
 
     // create the expected clock
     let mut expected = BEClock::new();
-    expected.add_dot(&Dot::new(&Musk::B, 5));
+    expected.add_dot(&Dot::new(&b, 5));
 
     assert_eq!(clock, expected);
 }

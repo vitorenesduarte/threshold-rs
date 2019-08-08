@@ -1,7 +1,6 @@
-#[macro_use(quickcheck)]
-extern crate quickcheck_macros;
-
-use threshold::*;
+use crate::tests::arbitrary::Musk;
+use crate::*;
+use quickcheck_macros::quickcheck;
 
 #[quickcheck]
 fn next_dot(actor: Musk, beclock: BEClock<Musk>) -> bool {

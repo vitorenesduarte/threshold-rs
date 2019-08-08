@@ -81,8 +81,8 @@ pub trait EventSet: IntoIterator + Clone + Debug {
     ///
     /// If we've seen events [1, 2, 3, 5, 6], this function returns in
     /// - `MaxSet`: (6, [])
-    /// - `BelowExSet`: (6, [4])
-    /// - `AboveExSet`: (3, [5, 6])
+    /// - `BelowExSet`: (6, \[4\])
+    /// - `AboveExSet`: (3, \[5, 6\])
     fn events(&self) -> (u64, Vec<u64>);
 
     /// Merges `other` `EventSet` into `self`.

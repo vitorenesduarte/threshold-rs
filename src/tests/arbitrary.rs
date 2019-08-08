@@ -3,7 +3,6 @@ use quickcheck::{Arbitrary, Gen};
 
 /// This enum should allow tests to be more effective since they only work on a
 /// small number of actors.
-/// TODO move this to a module in `tests/`
 #[derive(Clone, Hash, PartialEq, Eq, Debug)]
 pub enum Musk {
     A,
