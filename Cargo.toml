@@ -1,8 +1,18 @@
 [package]
 name = "threshold"
+description = "Threshold data structures"
 version = "0.1.0"
 authors = ["Vitor Enes <vitorenesduarte@gmail.com>"]
+license = "MIT OR Apache-2.0"
+homepage = "https://github.com/vitorenesduarte/threshold-rs"
+repository = "https://github.com/vitorenesduarte/threshold-rs.git"
+documentation = "https://docs.rs/threshold"
+keywords = ["threshold", "data-structures", "vector-clock"]
 edition = "2018"
+
+[badges]
+travis-ci = { repository = "vitorenesduarte/threshold-rs" }
+coveralls = { repository = "vitorenesduarte/threshold-rs", branch = "master", service = "github" }
 
 [dependencies]
 
