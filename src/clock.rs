@@ -204,8 +204,8 @@ impl<A: Actor, E: EventSet> Clock<A, E> {
             .collect()
     }
 
-    /// Given the `Clock`'s frontier, it computes the event that was generated
-    /// by at `threshold` actors.
+    /// By looking at this `Clock`'s frontier, it computes the event that's been
+    /// generated in at least `threshold` actors.
     ///
     /// # Examples
     /// ```
