@@ -36,8 +36,8 @@ impl Count for (u64, u64) {
 }
 
 /// Actor trait to be used in `Clock`'s or `TClock`'s.
-pub trait Actor: Clone + Hash + Eq + Debug {}
-impl<A: Clone + Hash + Eq + Debug> Actor for A {}
+pub trait Actor: Debug + Clone + Hash + Eq + Ord {}
+impl<A: Debug + Clone + Hash + Eq + Ord> Actor for A {}
 
 /// EventSet trait to be implemented by `MaxSet`, `BelowExSet` and `AboveExSet`.
 pub trait EventSet: IntoIterator + Clone + Debug {

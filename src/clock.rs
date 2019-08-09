@@ -19,6 +19,7 @@
 
 use crate::*;
 use std::collections::hash_map::{self, HashMap};
+use std::collections::BTreeMap;
 use std::iter::FromIterator;
 
 // A Vector Clock is `Clock` with `MaxSet` as `EventSet`.
@@ -197,37 +198,22 @@ impl<A: Actor, E: EventSet> Clock<A, E> {
     /// let dot_b2 = Dot::new(&actor_b, 2);
     ///
     /// let mut clock = VClock::new();
-    /// assert_eq!(clock.frontier(), HashMap::new());
+    /// assert_eq!(clock.frontier().all(), vec![]);
     ///
     /// clock.add_dot(&dot_a1);
-    /// assert_eq!(
-    ///     clock.frontier(),
-    ///     HashMap::from_iter(vec![(actor_a.clone(), 1)])
-    /// );
+    /// assert_eq!(clock.frontier().all(), vec![(&actor_a, &1)]);
     ///
     /// clock.add_dot(&dot_a3);
-    /// assert_eq!(
-    ///     clock.frontier(),
-    ///     HashMap::from_iter(vec![(actor_a.clone(), 3)])
-    /// );
+    /// assert_eq!(clock.frontier().all(), vec![(&actor_a, &3)]);
     ///
     /// clock.add_dot(&dot_a2);
-    /// assert_eq!(
-    ///     clock.frontier(),
-    ///     HashMap::from_iter(vec![(actor_a.clone(), 3)])
-    /// );
+    /// assert_eq!(clock.frontier().all(), vec![(&actor_a, &3)]);
     ///
     /// clock.add_dot(&dot_b2);
-    /// assert_eq!(
-    ///     clock.frontier(),
-    ///     HashMap::from_iter(vec![(actor_a.clone(), 3), (actor_b.clone(), 2)])
-    /// );
+    /// assert_eq!(clock.frontier().all(), vec![(&actor_b, &2), (&actor_a, &3)]);
     /// ```
-    pub fn frontier(&self) -> HashMap<A, u64> {
-        self.clock
-            .iter()
-            .map(|(actor, eset)| (actor.clone(), eset.frontier()))
-            .collect()
+    pub fn frontier(&self) -> ClockFrontier<A> {
+        ClockFrontier::from(&self)
     }
 
     /// Merges vector clock `other` passed as argument into `self`.
@@ -255,6 +241,55 @@ impl<A: Actor, E: EventSet> Clock<A, E> {
                 || (eset.clone(), ()),
             );
         }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ClockFrontier<A: Actor> {
+    /// Mapping from highest contiguous event to the set of actors that have
+    /// seen it
+    frontier: BTreeMap<u64, Vec<A>>,
+}
+
+impl<A: Actor> ClockFrontier<A> {
+    /// Returns a new `ClockFrontier` instance from a given `Clock`.
+    pub fn from<E: EventSet>(clock: &Clock<A, E>) -> Self {
+        // create new frontier
+        let mut frontier = BTreeMap::new();
+
+        // iterate clock and add all individual event set frontiers to the
+        // global clock frontier
+        clock.clock.iter().for_each(|(actor, eset)| {
+            let entry = frontier.entry(eset.frontier()).or_insert(vec![]);
+            entry.push(actor.clone());
+        });
+
+        // return frontier
+        ClockFrontier { frontier }
+    }
+
+    /// Retrieves the global clock frontier.
+    /// Note that we don't ensure any order between entries in the returned
+    /// `Vec`.
+    ///
+    /// # Examples
+    /// ```
+    /// use threshold::*;
+    ///
+    /// let a = ("A", AboveExSet::from_events(vec![1, 2, 4]));
+    /// let b = ("B", AboveExSet::from_events(vec![1, 2, 3, 5, 6]));
+    /// let aeclock = Clock::from(vec![a, b]);
+    ///
+    /// let frontier = ClockFrontier::from(&aeclock);
+    /// assert_eq!(frontier.all(), vec![(&"A", &2), (&"B", &3)]);
+    /// ```
+    pub fn all(&self) -> Vec<(&A, &u64)> {
+        self.frontier
+            .iter()
+            .flat_map(|(frontier, actors)| {
+                actors.iter().map(move |actor| (actor, frontier))
+            })
+            .collect()
     }
 }
 
