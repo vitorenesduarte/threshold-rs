@@ -1,4 +1,4 @@
-//! This module contains an implementation of a above-extra set.
+//! This module contains an implementation of an above-extra set.
 //!
 //! # Examples
 //! ```
@@ -29,7 +29,6 @@ pub struct AboveExSet {
     // Highest contiguous event seen
     max: u64,
     // Set of extra events above the highest (sorted ASC)
-    // see https://doc.rust-lang.org/std/collections/struct.BTreeSet.html#min-heap
     exs: BTreeSet<u64>,
 }
 
@@ -39,31 +38,6 @@ impl EventSet for AboveExSet {
         AboveExSet {
             max: 0,
             exs: BTreeSet::new(),
-        }
-    }
-
-    /// Creates a new instance from `event`.
-    ///
-    /// # Examples
-    /// ```
-    /// use threshold::*;
-    ///
-    /// let above_exset = AboveExSet::from_event(3);
-    /// assert!(!above_exset.is_event(&1));
-    /// assert!(!above_exset.is_event(&2));
-    /// assert!(above_exset.is_event(&3));
-    /// assert!(!above_exset.is_event(&4));
-    /// ```
-    fn from_event(event: u64) -> Self {
-        match event {
-            1 => AboveExSet {
-                max: 1,
-                exs: BTreeSet::new(),
-            },
-            _ => AboveExSet {
-                max: 0,
-                exs: [event].iter().cloned().collect(),
-            },
         }
     }
 

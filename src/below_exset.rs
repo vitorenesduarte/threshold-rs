@@ -42,24 +42,6 @@ impl EventSet for BelowExSet {
         }
     }
 
-    /// Creates a new instance from `event`.
-    /// All events smaller than `event` will become exceptions.
-    ///
-    /// # Examples
-    /// ```
-    /// use threshold::*;
-    ///
-    /// let below_exset = BelowExSet::from_event(3);
-    /// assert!(!below_exset.is_event(&1));
-    /// assert!(!below_exset.is_event(&2));
-    /// assert!(below_exset.is_event(&3));
-    /// assert!(!below_exset.is_event(&4));
-    /// ```
-    fn from_event(event: u64) -> Self {
-        let exs = (1..event).collect();
-        BelowExSet { max: event, exs }
-    }
-
     /// Generates the next event.
     /// There should be no exceptions when calling this.
     ///
