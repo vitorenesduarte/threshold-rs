@@ -146,6 +146,50 @@ impl EventSet for BelowExSet {
         (self.max, self.exs.clone().into_iter().collect())
     }
 
+    /// Returns the frontier (the highest contiguous event seen).
+    ///
+    /// __Note:__ this method's implementation will sort all exceptions on each
+    /// call, and with that, the performance will not be great. If this
+    /// becomes a problem, we could cache the frontier (as in `AboveExSet`)
+    /// so that it doesn't have to be computed here on each call.
+    ///
+    /// # Examples
+    /// ```
+    /// use threshold::*;
+    ///
+    /// let mut below_exset = BelowExSet::new();
+    /// assert_eq!(below_exset.frontier(), 0);
+    ///
+    /// below_exset.add_event(1);
+    /// assert_eq!(below_exset.frontier(), 1);
+    ///
+    /// below_exset.add_event(3);
+    /// assert_eq!(below_exset.frontier(), 1);
+    ///
+    /// below_exset.add_event(2);
+    /// assert_eq!(below_exset.frontier(), 3);
+    ///
+    /// below_exset.add_event(4);
+    /// assert_eq!(below_exset.frontier(), 4);
+    ///
+    /// below_exset.add_event(6);
+    /// assert_eq!(below_exset.frontier(), 4);
+    /// ```
+    fn frontier(&self) -> u64 {
+        // if there are no exceptions, then the highest contiguous event is
+        // self.max otherwise, it's the smallest exception - 1
+        if self.exs.is_empty() {
+            self.max
+        } else {
+            // sort exceptions
+            let mut exs = self.exs.iter().collect::<Vec<_>>();
+            exs.sort_unstable();
+
+            // return the smallest one -1
+            (**exs.iter().next().unwrap()) - 1
+        }
+    }
+
     /// Merges `other` `BelowExSet` into `self`.
     ///
     /// # Examples

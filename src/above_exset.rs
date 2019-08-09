@@ -140,6 +140,34 @@ impl EventSet for AboveExSet {
         (self.max, self.exs.clone().into_iter().collect())
     }
 
+    /// Returns the frontier (the highest contiguous event seen).
+    ///
+    /// # Examples
+    /// ```
+    /// use threshold::*;
+    ///
+    /// let mut above_exset = AboveExSet::new();
+    /// assert_eq!(above_exset.frontier(), 0);
+    ///
+    /// above_exset.add_event(1);
+    /// assert_eq!(above_exset.frontier(), 1);
+    ///
+    /// above_exset.add_event(3);
+    /// assert_eq!(above_exset.frontier(), 1);
+    ///
+    /// above_exset.add_event(2);
+    /// assert_eq!(above_exset.frontier(), 3);
+    ///
+    /// above_exset.add_event(4);
+    /// assert_eq!(above_exset.frontier(), 4);
+    ///
+    /// above_exset.add_event(6);
+    /// assert_eq!(above_exset.frontier(), 4);
+    /// ```
+    fn frontier(&self) -> u64 {
+        self.max
+    }
+
     /// Merges `other` `AboveExSet` into `self`.
     ///
     /// # Examples

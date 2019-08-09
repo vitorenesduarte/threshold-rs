@@ -180,6 +180,56 @@ impl<A: Actor, E: EventSet> Clock<A, E> {
             .map_or(false, |eset| eset.is_event(&dot.seq))
     }
 
+    /// Returns the clock frontier.
+    ///
+    /// # Examples
+    /// ```
+    /// use std::collections::HashMap;
+    /// use std::iter::FromIterator;
+    /// use threshold::*;
+    ///
+    /// let actor_a = "A";
+    /// let actor_b = "B";
+    ///
+    /// let dot_a1 = Dot::new(&actor_a, 1);
+    /// let dot_a2 = Dot::new(&actor_a, 2);
+    /// let dot_a3 = Dot::new(&actor_a, 3);
+    /// let dot_b2 = Dot::new(&actor_b, 2);
+    ///
+    /// let mut clock = VClock::new();
+    /// assert_eq!(clock.frontier(), HashMap::new());
+    ///
+    /// clock.add_dot(&dot_a1);
+    /// assert_eq!(
+    ///     clock.frontier(),
+    ///     HashMap::from_iter(vec![(actor_a.clone(), 1)])
+    /// );
+    ///
+    /// clock.add_dot(&dot_a3);
+    /// assert_eq!(
+    ///     clock.frontier(),
+    ///     HashMap::from_iter(vec![(actor_a.clone(), 3)])
+    /// );
+    ///
+    /// clock.add_dot(&dot_a2);
+    /// assert_eq!(
+    ///     clock.frontier(),
+    ///     HashMap::from_iter(vec![(actor_a.clone(), 3)])
+    /// );
+    ///
+    /// clock.add_dot(&dot_b2);
+    /// assert_eq!(
+    ///     clock.frontier(),
+    ///     HashMap::from_iter(vec![(actor_a.clone(), 3), (actor_b.clone(), 2)])
+    /// );
+    /// ```
+    pub fn frontier(&self) -> HashMap<A, u64> {
+        self.clock
+            .iter()
+            .map(|(actor, eset)| (actor.clone(), eset.frontier()))
+            .collect()
+    }
+
     /// Merges vector clock `other` passed as argument into `self`.
     /// After merge, all events in `other` are events in `self`.
     ///

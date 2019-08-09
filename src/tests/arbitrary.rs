@@ -109,8 +109,8 @@ impl<A: Actor + Arbitrary, E: EventSet + Arbitrary> Arbitrary for Clock<A, E> {
 
 #[cfg(test)]
 mod test {
-    use crate::*;
     use crate::tests::arbitrary::Musk;
+    use crate::*;
     use quickcheck::{Arbitrary, StdThreadGen};
 
     const ITERATIONS: usize = 100;

@@ -89,6 +89,9 @@ pub trait EventSet: IntoIterator + Clone + Debug {
     /// - `AboveExSet`: (3, \[5, 6\])
     fn events(&self) -> (u64, Vec<u64>);
 
+    /// Returns the frontier (the highest contiguous event seen).
+    fn frontier(&self) -> u64;
+
     /// Merges `other` `EventSet` into `self`.
     fn join(&mut self, other: &Self);
 }
