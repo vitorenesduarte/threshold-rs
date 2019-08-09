@@ -97,6 +97,8 @@ impl EventSet for MaxSet {
     /// Returns the frontier (the highest contiguous event seen).
     /// For a `MaxSet`, this is not necessarily the highest contiguous event,
     /// but simply the highest event.
+    /// For exact `EventSet` representations that will actually return the
+    /// highest contiguous event, see `AboveExSet` and `BelowExSet`.
     ///
     /// # Examples
     /// ```
