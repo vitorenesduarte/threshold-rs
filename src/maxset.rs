@@ -32,19 +32,6 @@ impl EventSet for MaxSet {
         MaxSet { max: 0 }
     }
 
-    /// Creates a new instance from `event`.
-    ///
-    /// # Examples
-    /// ```
-    /// use threshold::*;
-    ///
-    /// let maxset = MaxSet::from_event(10);
-    /// assert!(maxset.is_event(&10));
-    /// ```
-    fn from_event(event: u64) -> Self {
-        MaxSet { max: event }
-    }
-
     /// Generates the next event.
     ///
     /// # Examples
