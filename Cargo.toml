@@ -23,7 +23,7 @@ coveralls = { repository = "vitorenesduarte/threshold-rs", branch = "master", se
 
 [dev-dependencies]
 criterion = "0.2"
-rand = "0.6"
+rand = "0.7"
 quickcheck = "0.8"
 quickcheck_macros = "0.8"
 

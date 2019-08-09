@@ -113,51 +113,42 @@ mod test {
     use crate::tests::arbitrary::Musk;
     use quickcheck::{Arbitrary, StdThreadGen};
 
+    const ITERATIONS: usize = 100;
+
     #[test]
-    fn musk_shrink() {
-        let count = shrink_count::<Musk>();
-        assert!(count == 0);
+    fn no_shrink() {
+        no_shrink_assert::<Musk>();
+        no_shrink_assert::<Dot<u64>>();
     }
 
     #[test]
-    fn multiset_shrink() {
-        let count = shrink_count::<MultiSet<u64, u64>>();
-        assert!(count > 0);
+    fn some_shrink() {
+        some_shrink_assert::<MultiSet<u64, u64>>();
+        some_shrink_assert::<MaxSet>();
+        some_shrink_assert::<AboveExSet>();
+        some_shrink_assert::<BelowExSet>();
+        some_shrink_assert::<VClock<u64>>();
     }
 
-    #[test]
-    fn maxset_shrink() {
-        let count = shrink_count::<MaxSet>();
-        assert!(count > 0);
-    }
-
-    #[test]
-    fn above_exset_shrink() {
-        let count = shrink_count::<AboveExSet>();
-        assert!(count > 0);
-    }
-
-    #[test]
-    fn below_exset_shrink() {
-        let count = shrink_count::<BelowExSet>();
-        assert!(count > 0);
-    }
-
-    #[test]
-    fn dot_shrink() {
-        let count = shrink_count::<Dot<u64>>();
-        assert!(count == 0);
-    }
-
-    #[test]
-    fn vclock_shrink() {
-        let count = shrink_count::<VClock<u64>>();
-        assert!(count > 0);
-    }
-
-    fn shrink_count<T: Arbitrary>() -> usize {
+    fn arbitrary<T: Arbitrary>() -> T {
         let mut g = StdThreadGen::new(100);
-        let instance: T = Arbitrary::arbitrary(&mut g);
-        instance.shrink().count()
+        Arbitrary::arbitrary(&mut g)
+    }
+
+    fn no_shrink_assert<T: Arbitrary>() {
+        for _ in 0..ITERATIONS {
+            let a = arbitrary::<T>();
+            assert_eq!(a.shrink().count(), 0);
+        }
+    }
+
+    fn some_shrink_assert<T: Arbitrary + IntoIterator>() {
+        for _ in 0..ITERATIONS {
+            let a = arbitrary::<T>();
+            match a.clone().into_iter().count() {
+                0 => (),
+                _ => assert!(a.shrink().count() > 0),
+            }
+        }
     }
 }
