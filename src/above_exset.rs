@@ -215,16 +215,16 @@ impl AboveExSet {
         self.exs = self
             .exs
             .iter()
-            .filter(|&&extra| {
+            .skip_while(|&&extra| {
                 if extra == *max + 1 {
                     // we have a new max
                     *max = extra;
 
                     // don't keep it in extras
-                    false
+                    true
                 } else {
                     // keep it in extras
-                    true
+                    false
                 }
             })
             .cloned()

@@ -110,11 +110,36 @@ impl<A: Actor + Arbitrary, E: EventSet + Arbitrary> Arbitrary for Clock<A, E> {
 #[cfg(test)]
 mod test {
     use crate::*;
+    use crate::tests::arbitrary::Musk;
     use quickcheck::{Arbitrary, StdThreadGen};
+
+    #[test]
+    fn musk_shrink() {
+        let count = shrink_count::<Musk>();
+        assert!(count == 0);
+    }
 
     #[test]
     fn multiset_shrink() {
         let count = shrink_count::<MultiSet<u64, u64>>();
+        assert!(count > 0);
+    }
+
+    #[test]
+    fn maxset_shrink() {
+        let count = shrink_count::<MaxSet>();
+        assert!(count > 0);
+    }
+
+    #[test]
+    fn above_exset_shrink() {
+        let count = shrink_count::<AboveExSet>();
+        assert!(count > 0);
+    }
+
+    #[test]
+    fn below_exset_shrink() {
+        let count = shrink_count::<BelowExSet>();
         assert!(count > 0);
     }
 
