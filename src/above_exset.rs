@@ -259,7 +259,7 @@ pub struct IntoIter {
     current: u64,
     // Last contiguous value that should be returned by the iterator
     max: u64,
-    // Set of exceptions to be skipped by the iterator
+    // Iterator of extras
     exs: std::collections::btree_set::IntoIter<u64>,
 }
 
