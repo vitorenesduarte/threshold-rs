@@ -86,7 +86,7 @@ impl<E: Ord, C: Count> MultiSet<E, C> {
     /// ```
     pub fn add_elem(&mut self, elem: E, by: C) {
         // increase element count
-        let count = self.occurrences.entry(elem).or_insert(Count::zero());
+        let count = self.occurrences.entry(elem).or_insert_with(Count::zero);
         count.add(by);
     }
 

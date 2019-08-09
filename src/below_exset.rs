@@ -182,7 +182,7 @@ impl EventSet for BelowExSet {
             self.max
         } else {
             // sort exceptions
-            let mut exs = self.exs.iter().collect::<Vec<_>>();
+            let mut exs: Vec<_> = self.exs.iter().collect();
             exs.sort_unstable();
 
             // return the smallest one -1

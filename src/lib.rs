@@ -23,7 +23,7 @@ pub mod tclock;
 // Top-level re-exports.
 pub use crate::above_exset::AboveExSet;
 pub use crate::below_exset::BelowExSet;
-pub use crate::clock::{AEClock, BEClock, Clock, ClockFrontier, Dot, VClock};
+pub use crate::clock::{AEClock, BEClock, Clock, Dot, VClock};
 pub use crate::maxset::MaxSet;
 pub use crate::multiset::MultiSet;
 pub use crate::tclock::TClock;
