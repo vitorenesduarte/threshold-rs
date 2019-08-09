@@ -5,7 +5,7 @@ const MAX_EVENTS: u64 = 20;
 
 /// This enum should allow tests to be more effective since they only work on a
 /// small number of actors.
-#[derive(Clone, Hash, PartialEq, Eq, Debug)]
+#[derive(Debug, Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Musk {
     A,
     B,
@@ -109,8 +109,8 @@ impl<A: Actor + Arbitrary, E: EventSet + Arbitrary> Arbitrary for Clock<A, E> {
 
 #[cfg(test)]
 mod test {
-    use crate::*;
     use crate::tests::arbitrary::Musk;
+    use crate::*;
     use quickcheck::{Arbitrary, StdThreadGen};
 
     const ITERATIONS: usize = 100;

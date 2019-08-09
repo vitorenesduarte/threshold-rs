@@ -180,6 +180,71 @@ impl<A: Actor, E: EventSet> Clock<A, E> {
             .map_or(false, |eset| eset.is_event(&dot.seq))
     }
 
+    /// Returns the clock frontier.
+    ///
+    /// # Examples
+    /// ```
+    /// use std::collections::HashMap;
+    /// use std::iter::FromIterator;
+    /// use threshold::*;
+    ///
+    /// let a = ("A", AboveExSet::from_events(vec![1, 2, 4]));
+    /// let b = ("B", AboveExSet::from_events(vec![1, 2, 3, 5, 6]));
+    /// let clock = Clock::from(vec![a, b]);
+    ///
+    /// assert_eq!(
+    ///     clock.frontier(),
+    ///     HashMap::from_iter(vec![(&"A", 2), (&"B", 3)])
+    /// );
+    /// ```
+    pub fn frontier(&self) -> HashMap<&A, u64> {
+        self.clock
+            .iter()
+            .map(|(actor, eset)| (actor, eset.frontier()))
+            .collect()
+    }
+
+    /// By looking at this `Clock`'s frontier, it computes the event that's been
+    /// generated in at least `threshold` actors.
+    ///
+    /// # Examples
+    /// ```
+    /// use threshold::{clock, *};
+    ///
+    /// let aset = AboveExSet::from_events(vec![1, 2, 4]);
+    /// let bset = AboveExSet::from_events(vec![1, 2, 3, 5]);
+    /// let clock = Clock::from(vec![("A", aset), ("B", bset)]);
+    /// assert_eq!(clock.frontier_threshold(1), Some(2));
+    /// assert_eq!(clock.frontier_threshold(2), Some(3));
+    /// assert_eq!(clock.frontier_threshold(3), None);
+    ///
+    /// let aset = AboveExSet::from_events(vec![1, 2, 3, 5]);
+    /// let bset = AboveExSet::from_events(vec![1, 2, 3, 5]);
+    /// let clock = Clock::from(vec![("A", aset), ("B", bset)]);
+    /// assert_eq!(clock.frontier_threshold(1), Some(3));
+    /// assert_eq!(clock.frontier_threshold(2), Some(3));
+    ///
+    /// let clock = clock::vclock_from_seqs(vec![2, 1, 3]);
+    /// assert_eq!(clock.frontier_threshold(1), Some(1));
+    /// assert_eq!(clock.frontier_threshold(2), Some(2));
+    /// assert_eq!(clock.frontier_threshold(3), Some(3));
+    ///
+    /// let clock = clock::vclock_from_seqs(vec![4, 4, 5, 3, 2]);
+    /// assert_eq!(clock.frontier_threshold(1), Some(2));
+    /// assert_eq!(clock.frontier_threshold(2), Some(3));
+    /// assert_eq!(clock.frontier_threshold(3), Some(4));
+    /// assert_eq!(clock.frontier_threshold(4), Some(4));
+    /// assert_eq!(clock.frontier_threshold(5), Some(5));
+    /// assert_eq!(clock.frontier_threshold(6), None);
+    /// ```
+    pub fn frontier_threshold(&self, threshold: usize) -> Option<u64> {
+        assert!(threshold > 0);
+        let mut frontiers: Vec<_> =
+            self.clock.iter().map(|(_, eset)| eset.frontier()).collect();
+        frontiers.sort_unstable();
+        frontiers.into_iter().nth(threshold - 1)
+    }
+
     /// Merges vector clock `other` passed as argument into `self`.
     /// After merge, all events in `other` are events in `self`.
     ///

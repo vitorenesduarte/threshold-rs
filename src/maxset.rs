@@ -94,6 +94,38 @@ impl EventSet for MaxSet {
         (self.max, vec![])
     }
 
+    /// Returns the frontier (the highest contiguous event seen).
+    /// For a `MaxSet`, this is not necessarily the highest contiguous event,
+    /// but simply the highest event.
+    /// For exact `EventSet` representations that will actually return the
+    /// highest contiguous event, see `AboveExSet` and `BelowExSet`.
+    ///
+    /// # Examples
+    /// ```
+    /// use threshold::*;
+    ///
+    /// let mut maxset = MaxSet::new();
+    /// assert_eq!(maxset.frontier(), 0);
+    ///
+    /// maxset.add_event(1);
+    /// assert_eq!(maxset.frontier(), 1);
+    ///
+    /// maxset.add_event(3);
+    /// assert_eq!(maxset.frontier(), 3);
+    ///
+    /// maxset.add_event(2);
+    /// assert_eq!(maxset.frontier(), 3);
+    ///
+    /// maxset.add_event(4);
+    /// assert_eq!(maxset.frontier(), 4);
+    ///
+    /// maxset.add_event(6);
+    /// assert_eq!(maxset.frontier(), 6);
+    /// ```
+    fn frontier(&self) -> u64 {
+        self.max
+    }
+
     /// Merges `other` `MaxSet` into `self`.
     ///
     /// # Examples
