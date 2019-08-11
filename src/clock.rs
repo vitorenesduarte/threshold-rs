@@ -144,10 +144,15 @@ impl<A: Actor, E: EventSet> Clock<A, E> {
     /// assert!(clock_b.is_element(&dot_a1));
     /// ```
     pub fn add_dot(&mut self, dot: &Dot<A>) {
+        self.add(&dot.actor, dot.seq);
+    }
+
+    /// Similar to `add_dot` but does not require a `Dot` instance.
+    pub fn add(&mut self, actor: &A, seq: u64) {
         self.upsert(
-            &dot.actor,
-            |eset| eset.add_event(dot.seq),
-            || (E::from_event(dot.seq), ()),
+            actor,
+            |eset| eset.add_event(seq),
+            || (E::from_event(seq), ()),
         );
     }
 
