@@ -4,6 +4,16 @@ use quickcheck_macros::quickcheck;
 use std::collections::BTreeSet;
 
 #[quickcheck]
+fn add_event_above_exset(event: u64, events: BTreeSet<u64>) -> TestResult {
+    check_add_event::<AboveExSet>(event, events)
+}
+
+#[quickcheck]
+fn add_event_below_exset(event: u64, events: BTreeSet<u64>) -> TestResult {
+    check_add_event::<BelowExSet>(event, events)
+}
+
+#[quickcheck]
 fn is_event_max_set(events: Vec<u64>) -> bool {
     check_is_event::<MaxSet>(events)
 }
@@ -48,6 +58,32 @@ fn frontier_above_exset(events: BTreeSet<u64>) -> TestResult {
 #[quickcheck]
 fn frontier_below_exset(events: BTreeSet<u64>) -> TestResult {
     check_frontier::<BelowExSet>(events)
+}
+
+// TODO this test currently will fail with `MaxSet` due to its special semantics
+// (events do not need to be added to be part of the set)
+fn check_add_event<E: EventSet>(
+    event: u64,
+    events: BTreeSet<u64>,
+) -> TestResult {
+    // event 0 is not allowed
+    if event == 0 {
+        return TestResult::discard();
+    }
+
+    // create event set from events
+    let mut eset = E::from_events(events.clone());
+
+    // check if event is part of the events added
+    let res = if events.contains(&event) {
+        // if yes, then adding it again returns false
+        !eset.add_event(event)
+    } else {
+        // else, returns true (it's a new event)
+        eset.add_event(event)
+    };
+
+    TestResult::from_bool(res)
 }
 
 fn check_is_event<E: EventSet>(events: Vec<u64>) -> bool {

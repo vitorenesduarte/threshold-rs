@@ -80,11 +80,14 @@ impl EventSet for BelowExSet {
     /// assert!(below_exset.is_event(&2));
     /// assert!(below_exset.is_event(&3));
     /// ```
-    fn add_event(&mut self, event: u64) {
+    fn add_event(&mut self, event: u64) -> bool {
         match event.cmp(&self.max) {
             Ordering::Less => {
-                // remove from exceptions (it might not be an exception though)
-                self.exs.remove(&event);
+                // remove from exceptions (it might not be an exception though).
+                // the result is the same as the result of the remove in the
+                // exceptions:
+                // - if it was an exception, then it's also a new event
+                self.exs.remove(&event)
             }
             Ordering::Greater => {
                 // this event is now the new max, which might create exceptions
@@ -92,9 +95,12 @@ impl EventSet for BelowExSet {
                     self.exs.insert(new_ex);
                 }
                 self.max = event;
+                // new event, so `true`
+                true
             }
             Ordering::Equal => {
                 // nothing to do since it is already an event
+                false
             }
         }
     }

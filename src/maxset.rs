@@ -48,6 +48,7 @@ impl EventSet for MaxSet {
     }
 
     /// Adds an event to the set.
+    /// Returns `true` if it's a new event.
     ///
     /// # Examples
     /// ```
@@ -61,8 +62,13 @@ impl EventSet for MaxSet {
     /// assert!(maxset.is_event(&9));
     /// assert!(maxset.is_event(&10));
     /// ```
-    fn add_event(&mut self, event: u64) {
-        self.max = std::cmp::max(self.max, event);
+    fn add_event(&mut self, event: u64) -> bool {
+        if event <= self.max {
+            false
+        } else {
+            self.max = event;
+            true
+        }
     }
 
     /// Checks if an event is part of the set.

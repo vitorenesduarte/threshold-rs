@@ -64,7 +64,7 @@ pub trait EventSet: IntoIterator + Clone + Debug {
     fn next_event(&mut self) -> u64;
 
     /// Adds an event to the set.
-    fn add_event(&mut self, event: u64);
+    fn add_event(&mut self, event: u64) -> bool;
 
     /// Checks if an event is part of the set.
     fn is_event(&self, event: &u64) -> bool;

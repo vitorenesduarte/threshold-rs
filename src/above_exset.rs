@@ -58,6 +58,7 @@ impl EventSet for AboveExSet {
     }
 
     /// Adds an event to the set.
+    /// Returns `true` if it's a new event.
     ///
     /// # Examples
     /// ```
@@ -79,18 +80,25 @@ impl EventSet for AboveExSet {
     /// assert!(above_exset.is_event(&2));
     /// assert!(above_exset.is_event(&3));
     /// ```
-    fn add_event(&mut self, event: u64) {
+    fn add_event(&mut self, event: u64) -> bool {
         if event == self.max + 1 {
             // this event is now the new max
             self.max = event;
 
             // maybe compress
             self.try_compress();
+
+            // new event, so `true`
+            true
         } else if event > self.max + 1 {
-            // add as an extra
-            self.exs.insert(event);
+            // add as an extra. the result is the same as the result of the
+            // insert in the extras:
+            // - if it's a new extra, then it's also a new event
+            self.exs.insert(event)
+        } else {
+            // else it's already an event
+            false
         }
-        // else it's already an event
     }
 
     /// Checks if an event is part of the set.

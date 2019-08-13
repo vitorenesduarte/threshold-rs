@@ -126,6 +126,8 @@ impl<A: Actor, E: EventSet> Clock<A, E> {
     }
 
     /// Adds a `Dot` to the clock.
+    /// If the clock did not have this `Dot` present, `true` is returned.
+    /// If the clock did have this `Dot` present, `false` is returned.
     ///
     /// # Examples
     /// ```
@@ -143,17 +145,17 @@ impl<A: Actor, E: EventSet> Clock<A, E> {
     /// clock_b.add_dot(&dot_a1);
     /// assert!(clock_b.is_element(&dot_a1));
     /// ```
-    pub fn add_dot(&mut self, dot: &Dot<A>) {
-        self.add(&dot.actor, dot.seq);
+    pub fn add_dot(&mut self, dot: &Dot<A>) -> bool {
+        self.add(&dot.actor, dot.seq)
     }
 
     /// Similar to `add_dot` but does not require a `Dot` instance.
-    pub fn add(&mut self, actor: &A, seq: u64) {
+    pub fn add(&mut self, actor: &A, seq: u64) -> bool {
         self.upsert(
             actor,
             |eset| eset.add_event(seq),
-            || (E::from_event(seq), ()),
-        );
+            || (E::from_event(seq), true),
+        )
     }
 
     /// Checks if an `Dot` is part of the clock.
