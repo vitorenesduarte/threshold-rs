@@ -75,9 +75,9 @@ impl<A: Actor, E: EventSet> Clock<A, E> {
     ///     HashMap::from_iter(vec![(&"A", 0), (&"B", 0)]),
     /// );
     /// ```
-    pub fn with(actors: Vec<A>) -> Self {
+    pub fn with<I: IntoIterator<Item = A>>(iter: I) -> Self {
         Clock {
-            clock: actors.into_iter().map(|actor| (actor, E::new())).collect(),
+            clock: iter.into_iter().map(|actor| (actor, E::new())).collect(),
         }
     }
 
