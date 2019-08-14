@@ -60,6 +60,30 @@ impl<A: Actor, E: EventSet> Clock<A, E> {
         }
     }
 
+    /// Returns a new `Clock` mapping each actor to a bottom entry.
+    ///
+    /// # Examples
+    /// ```
+    /// use std::collections::HashMap;
+    /// use std::iter::FromIterator;
+    /// use threshold::*;
+    ///
+    /// let actors = vec!["A", "B"];
+    /// let vclock: Clock<_, MaxSet> = Clock::with(actors);
+    /// assert_eq!(
+    ///     vclock.frontier(),
+    ///     HashMap::from_iter(vec![(&"A", 0), (&"B", 0)]),
+    /// );
+    ///
+    /// let vclock: Clock<&str, MaxSet> = Clock::new();
+    /// assert_eq!(vclock.frontier(), HashMap::new(),);
+    /// ```
+    pub fn with(actors: Vec<A>) -> Self {
+        Clock {
+            clock: actors.into_iter().map(|actor| (actor, E::new())).collect(),
+        }
+    }
+
     /// Creates a `Clock` from an iterator of tuples (actor identifier and event
     /// set).
     ///
