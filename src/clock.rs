@@ -111,9 +111,9 @@ impl<A: Actor, E: EventSet> Clock<A, E> {
     /// let b = ("B", MaxSet::from_event(20));
     /// let vclock = Clock::from(vec![a, b]);
     ///
-    /// assert_eq!(vclock.actor_count(), 2);
+    /// assert_eq!(vclock.len(), 2);
     /// ```
-    pub fn actor_count(&self) -> usize {
+    pub fn len(&self) -> usize {
         self.clock.len()
     }
 
