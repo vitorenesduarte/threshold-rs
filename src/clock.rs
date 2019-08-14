@@ -69,14 +69,11 @@ impl<A: Actor, E: EventSet> Clock<A, E> {
     /// use threshold::*;
     ///
     /// let actors = vec!["A", "B"];
-    /// let vclock: Clock<_, MaxSet> = Clock::with(actors);
+    /// let vclock = VClock::with(actors);
     /// assert_eq!(
     ///     vclock.frontier(),
     ///     HashMap::from_iter(vec![(&"A", 0), (&"B", 0)]),
     /// );
-    ///
-    /// let vclock: Clock<&str, MaxSet> = Clock::new();
-    /// assert_eq!(vclock.frontier(), HashMap::new(),);
     /// ```
     pub fn with(actors: Vec<A>) -> Self {
         Clock {
@@ -102,6 +99,22 @@ impl<A: Actor, E: EventSet> Clock<A, E> {
         Clock {
             clock: HashMap::from_iter(iter),
         }
+    }
+
+    /// Returns the number of actors in the clock.
+    ///
+    /// # Examples
+    /// ```
+    /// use threshold::*;
+    ///
+    /// let a = ("A", MaxSet::from_event(10));
+    /// let b = ("B", MaxSet::from_event(20));
+    /// let vclock = Clock::from(vec![a, b]);
+    ///
+    /// assert_eq!(vclock.actor_count(), 2);
+    /// ```
+    pub fn actor_count(&self) -> usize {
+        self.clock.len()
     }
 
     /// Returns a new `Dot` for the `actor` while updating the clock.
