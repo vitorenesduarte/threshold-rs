@@ -71,6 +71,16 @@ impl EventSet for MaxSet {
         }
     }
 
+    /// Adds a range of events to the set.
+    /// Returns `true` if a new event was added.
+    ///
+    /// In the case of `MaxSet` we have that:
+    /// - `add_event_range(start, end) == add_event(end)`
+    fn add_event_range(&mut self, start: u64, end: u64) -> bool {
+        assert!(start <= end);
+        self.add_event(end)
+    }
+
     /// Checks if an event is part of the set.
     ///
     /// # Examples

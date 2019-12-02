@@ -195,6 +195,28 @@ impl<A: Actor, E: EventSet> Clock<A, E> {
         )
     }
 
+    /// Adds a range of events to the clock.
+    /// # Examples
+    /// ```
+    /// use threshold::*;
+    ///
+    /// let actor_a = "A";
+    /// let actor_b = "B";
+    ///
+    /// let mut clock_a = VClock::new();
+    /// clock_a.add_range(&actor_a, 10, 20);
+    /// assert!(clock_a.is_element(&Dot::new(&actor_a, 10)));
+    /// assert!(clock_a.is_element(&Dot::new(&actor_a, 11)));
+    /// assert!(!clock_a.is_element(&Dot::new(&actor_a, 21)));
+    /// ```
+    pub fn add_range(&mut self, actor: &A, start: u64, end: u64) -> bool {
+        self.upsert(
+            actor,
+            |eset| eset.add_event_range(start, end),
+            || (E::from_event_range(start, end), true),
+        )
+    }
+
     /// Checks if an `Dot` is part of the clock.
     ///
     /// # Examples

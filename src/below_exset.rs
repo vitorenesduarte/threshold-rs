@@ -322,3 +322,23 @@ impl IntoIterator for BelowExSet {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn range() {
+        // add event 1 and 2 to eset
+        let mut eset = BelowExSet::new();
+        eset.add_event(1);
+        eset.add_event(2);
+
+        // create range
+        let start = 1;
+        let end = 2;
+
+        // check it's the same
+        assert_eq!(eset, BelowExSet::from_event_range(start, end));
+    }
+}

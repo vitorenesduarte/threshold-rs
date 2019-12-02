@@ -2,6 +2,7 @@ use crate::*;
 use quickcheck::TestResult;
 use quickcheck_macros::quickcheck;
 use std::collections::BTreeSet;
+use std::iter::FromIterator;
 
 #[quickcheck]
 fn add_event_above_exset(event: u64, events: BTreeSet<u64>) -> TestResult {
@@ -11,6 +12,24 @@ fn add_event_above_exset(event: u64, events: BTreeSet<u64>) -> TestResult {
 #[quickcheck]
 fn add_event_below_exset(event: u64, events: BTreeSet<u64>) -> TestResult {
     check_add_event::<BelowExSet>(event, events)
+}
+
+#[quickcheck]
+fn add_event_range_above_exset(
+    start: u64,
+    end: u64,
+    events: BTreeSet<u64>,
+) -> TestResult {
+    check_add_event_range::<AboveExSet>(start, end, events)
+}
+
+#[quickcheck]
+fn add_event_range_below_exset(
+    start: u64,
+    end: u64,
+    events: BTreeSet<u64>,
+) -> TestResult {
+    check_add_event_range::<BelowExSet>(start, end, events)
 }
 
 #[quickcheck]
@@ -64,7 +83,7 @@ fn frontier_below_exset(events: BTreeSet<u64>) -> TestResult {
 // (events do not need to be added to be part of the set)
 fn check_add_event<E: EventSet>(
     event: u64,
-    events: BTreeSet<u64>,
+    mut events: BTreeSet<u64>,
 ) -> TestResult {
     // event 0 is not allowed
     if event == 0 {
@@ -74,14 +93,67 @@ fn check_add_event<E: EventSet>(
     // create event set from events
     let mut eset = E::from_events(events.clone());
 
-    // check if event is part of the events added
-    let res = if events.contains(&event) {
+    // check if `event` is part of the` events` added
+    let res_0 = if events.contains(&event) {
         // if yes, then adding it again returns false
         !eset.add_event(event)
     } else {
         // else, returns true (it's a new event)
         eset.add_event(event)
     };
+
+    // also add `event` to `events`
+    events.insert(event);
+
+    // check that only the initial events and the added event are events now
+    let highest_event = events.iter().last().unwrap();
+    let res_1 = (1..highest_event + 10).all(|event| {
+        // if `event` part of `events` then it's part of `eset`
+        // otherwise it's not part of `eset`
+        if events.contains(&event) {
+            eset.is_event(&event)
+        } else {
+            !eset.is_event(&event)
+        }
+    });
+
+    TestResult::from_bool(res_0 && res_1)
+}
+
+fn check_add_event_range<E: EventSet>(
+    start: u64,
+    end: u64,
+    mut events: BTreeSet<u64>,
+) -> TestResult {
+    // event 0 and invalid ranges are not allowed
+    if start == 0 || end == 0 || start > end {
+        return TestResult::discard();
+    }
+
+    println!("start: {} | end {}", start, end);
+
+    // create event set from events
+    let mut eset = E::from_events(events.clone());
+    println!("eset0: {:?}", eset);
+
+    // add event range to eset
+    eset.add_event_range(start, end);
+    println!("eset1: {:?}", eset);
+
+    // also add event range to `events`
+    events.extend(BTreeSet::from_iter(start..=end));
+
+    // check that only the initial events and the added event are events now
+    let highest_event = events.iter().last().unwrap();
+    let res = (1..highest_event + 10).all(|event| {
+        // if `event` part of `events` then it's part of `eset`
+        // otherwise it's not part of `eset`
+        if events.contains(&event) {
+            eset.is_event(&event)
+        } else {
+            !eset.is_event(&event)
+        }
+    });
 
     TestResult::from_bool(res)
 }
