@@ -124,14 +124,14 @@ impl<A: Actor, E: EventSet> Clock<A, E> {
     /// ```
     /// use threshold::*;
     ///
-    /// let vclock = Clock::new();
-    /// assert!(vclock.is_empty());
-    ///
     /// let a = ("A", MaxSet::from_event(10));
     /// let b = ("B", MaxSet::from_event(20));
-    /// let vclock = Clock::from(vec![a, b]);
+    /// let mut vclock = Clock::from(vec![a, b]);
     ///
     /// assert!(!vclock.is_empty());
+    ///
+    /// vclock = VClock::new();
+    /// assert!(vclock.is_empty());
     /// ```
     pub fn is_empty(&self) -> bool {
         self.clock.is_empty()
