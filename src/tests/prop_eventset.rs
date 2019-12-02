@@ -130,15 +130,11 @@ fn check_add_event_range<E: EventSet>(
         return TestResult::discard();
     }
 
-    println!("start: {} | end {}", start, end);
-
     // create event set from events
     let mut eset = E::from_events(events.clone());
-    println!("eset0: {:?}", eset);
 
     // add event range to eset
     eset.add_event_range(start, end);
-    println!("eset1: {:?}", eset);
 
     // also add event range to `events`
     events.extend(BTreeSet::from_iter(start..=end));
