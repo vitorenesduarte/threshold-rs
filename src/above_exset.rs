@@ -115,8 +115,8 @@ impl EventSet for AboveExSet {
     /// assert!(!above_exset.is_event(&2));
     /// assert!(above_exset.is_event(&3));
     /// ```
-    fn is_event(&self, event: &u64) -> bool {
-        *event <= self.max || self.exs.contains(event)
+    fn is_event(&self, event: u64) -> bool {
+        event <= self.max || self.exs.contains(&event)
     }
 
     /// Returns all events seen as a tuple.

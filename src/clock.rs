@@ -54,6 +54,7 @@ pub struct Clock<A: Actor, E: EventSet> {
 
 impl<A: Actor, E: EventSet> Clock<A, E> {
     /// Returns a new `Clock` instance.
+    #[allow(clippy::new_without_default)]
     pub fn new() -> Self {
         Clock {
             clock: HashMap::new(),
@@ -115,6 +116,25 @@ impl<A: Actor, E: EventSet> Clock<A, E> {
     /// ```
     pub fn len(&self) -> usize {
         self.clock.len()
+    }
+
+    /// Checks that a clock is empty.
+    ///
+    /// # Examples
+    /// ```
+    /// use threshold::*;
+    ///
+    /// let vclock = Clock::new();
+    /// assert!(vclock.is_empty());
+    ///
+    /// let a = ("A", MaxSet::from_event(10));
+    /// let b = ("B", MaxSet::from_event(20));
+    /// let vclock = Clock::from(vec![a, b]);
+    ///
+    /// assert!(!vclock.is_empty());
+    /// ```
+    pub fn is_empty(&self) -> bool {
+        self.clock.is_empty()
     }
 
     /// Returns a new `Dot` for the `actor` while updating the clock.
@@ -243,7 +263,7 @@ impl<A: Actor, E: EventSet> Clock<A, E> {
     pub fn is_element(&self, dot: &Dot<A>) -> bool {
         self.clock
             .get(&dot.actor)
-            .map_or(false, |eset| eset.is_event(&dot.seq))
+            .map_or(false, |eset| eset.is_event(dot.seq))
     }
 
     /// Returns the clock frontier.

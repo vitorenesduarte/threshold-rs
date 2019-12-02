@@ -31,6 +31,7 @@ pub struct MultiSet<E: Ord, C: Count> {
 
 impl<E: Ord, C: Count> MultiSet<E, C> {
     /// Returns a new `MultiSet` instance.
+    #[allow(clippy::new_without_default)]
     pub fn new() -> Self {
         MultiSet {
             occurrences: BTreeMap::new(),

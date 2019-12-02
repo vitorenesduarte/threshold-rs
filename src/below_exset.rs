@@ -119,8 +119,8 @@ impl EventSet for BelowExSet {
     /// assert!(!below_exset.is_event(&2));
     /// assert!(below_exset.is_event(&3));
     /// ```
-    fn is_event(&self, event: &u64) -> bool {
-        *event <= self.max && !self.exs.contains(event)
+    fn is_event(&self, event: u64) -> bool {
+        event <= self.max && !self.exs.contains(&event)
     }
 
     /// Returns all events seen as a tuple.
@@ -227,12 +227,16 @@ impl EventSet for BelowExSet {
         // - this means that the join does not create new exceptions
         //
         // keep the local exceptions that are not remote events
-        self.exs.retain(|ex| !other.is_event(ex));
+        self.exs.retain(|ex| !other.is_event(*ex));
 
         // keep the remote exceptions that are not local events
-        for ex in other.exs.iter().filter(|ex| !before.is_event(ex)) {
-            self.exs.insert(*ex);
-        }
+        other
+            .exs
+            .iter()
+            .filter(|&&ex| !before.is_event(ex))
+            .for_each(|&ex| {
+                self.exs.insert(ex);
+            });
 
         // the new max value is the max of both max values
         self.max = std::cmp::max(self.max, other.max);
@@ -285,7 +289,7 @@ impl Iterator for IntoIter {
 
             if self.exs.contains(&self.current) {
                 // if the next value is an exception, skip it
-                return self.next();
+                self.next()
             } else {
                 // otherwise, return it
                 Some(self.current)

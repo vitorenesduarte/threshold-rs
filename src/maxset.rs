@@ -91,8 +91,8 @@ impl EventSet for MaxSet {
     /// let event = maxset.next_event();
     /// assert!(maxset.is_event(&event));
     /// ```
-    fn is_event(&self, event: &u64) -> bool {
-        *event <= self.max
+    fn is_event(&self, event: u64) -> bool {
+        event <= self.max
     }
 
     /// Returns all events seen.

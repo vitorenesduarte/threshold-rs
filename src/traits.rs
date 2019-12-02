@@ -18,7 +18,7 @@ impl Count for u64 {
 
     /// Add to the count.
     fn add(&mut self, other: Self) {
-        *self = *self + other;
+        *self += other;
     }
 }
 
@@ -30,8 +30,8 @@ impl Count for (u64, u64) {
 
     /// Add to the count.
     fn add(&mut self, other: Self) {
-        self.0 = self.0 + other.0;
-        self.1 = self.1 + other.1;
+        self.0 += other.0;
+        self.1 += other.1;
     }
 }
 
@@ -84,7 +84,7 @@ pub trait EventSet: IntoIterator + Clone + Debug {
     }
 
     /// Checks if an event is part of the set.
-    fn is_event(&self, event: &u64) -> bool;
+    fn is_event(&self, event: u64) -> bool;
 
     /// Returns all events seen as a pair.
     ///

@@ -111,9 +111,9 @@ fn check_add_event<E: EventSet>(
         // if `event` part of `events` then it's part of `eset`
         // otherwise it's not part of `eset`
         if events.contains(&event) {
-            eset.is_event(&event)
+            eset.is_event(event)
         } else {
-            !eset.is_event(&event)
+            !eset.is_event(event)
         }
     });
 
@@ -145,9 +145,9 @@ fn check_add_event_range<E: EventSet>(
         // if `event` part of `events` then it's part of `eset`
         // otherwise it's not part of `eset`
         if events.contains(&event) {
-            eset.is_event(&event)
+            eset.is_event(event)
         } else {
-            !eset.is_event(&event)
+            !eset.is_event(event)
         }
     });
 
@@ -156,7 +156,7 @@ fn check_add_event_range<E: EventSet>(
 
 fn check_is_event<E: EventSet>(events: Vec<u64>) -> bool {
     let eset = E::from_events(events.clone());
-    events.iter().all(|event| eset.is_event(event))
+    events.into_iter().all(|event| eset.is_event(event))
 }
 
 fn check_join<E: EventSet>(events_a: Vec<u64>, events_b: Vec<u64>) -> bool {
@@ -164,8 +164,8 @@ fn check_join<E: EventSet>(events_a: Vec<u64>, events_b: Vec<u64>) -> bool {
     let eset_b = E::from_events(events_b.clone());
     eset_a.join(&eset_b);
     events_a
-        .iter()
-        .chain(events_b.iter())
+        .into_iter()
+        .chain(events_b.into_iter())
         .all(|event| eset_a.is_event(event))
 }
 
