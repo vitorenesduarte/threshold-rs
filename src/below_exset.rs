@@ -6,18 +6,18 @@
 //!
 //! let mut below_exset = BelowExSet::new();
 //! assert_eq!(below_exset.next_event(), 1);
-//! assert!(below_exset.is_event(&1));
-//! assert!(!below_exset.is_event(&2));
+//! assert!(below_exset.is_event(1));
+//! assert!(!below_exset.is_event(2));
 //!
 //! let other = BelowExSet::from_event(3);
-//! assert!(!other.is_event(&1));
-//! assert!(!other.is_event(&2));
-//! assert!(other.is_event(&3));
+//! assert!(!other.is_event(1));
+//! assert!(!other.is_event(2));
+//! assert!(other.is_event(3));
 //!
 //! below_exset.join(&other);
-//! assert!(below_exset.is_event(&1));
-//! assert!(!below_exset.is_event(&2));
-//! assert!(below_exset.is_event(&3));
+//! assert!(below_exset.is_event(1));
+//! assert!(!below_exset.is_event(2));
+//! assert!(below_exset.is_event(3));
 //! ```
 
 use crate::EventSet;
@@ -67,18 +67,18 @@ impl EventSet for BelowExSet {
     /// let mut below_exset = BelowExSet::new();
     ///
     /// below_exset.add_event(1);
-    /// assert!(below_exset.is_event(&1));
-    /// assert!(!below_exset.is_event(&2));
+    /// assert!(below_exset.is_event(1));
+    /// assert!(!below_exset.is_event(2));
     ///
     /// below_exset.add_event(3);
-    /// assert!(below_exset.is_event(&1));
-    /// assert!(!below_exset.is_event(&2));
-    /// assert!(below_exset.is_event(&3));
+    /// assert!(below_exset.is_event(1));
+    /// assert!(!below_exset.is_event(2));
+    /// assert!(below_exset.is_event(3));
     ///
     /// below_exset.add_event(2);
-    /// assert!(below_exset.is_event(&1));
-    /// assert!(below_exset.is_event(&2));
-    /// assert!(below_exset.is_event(&3));
+    /// assert!(below_exset.is_event(1));
+    /// assert!(below_exset.is_event(2));
+    /// assert!(below_exset.is_event(3));
     /// ```
     fn add_event(&mut self, event: u64) -> bool {
         match event.cmp(&self.max) {
@@ -113,14 +113,14 @@ impl EventSet for BelowExSet {
     ///
     /// let mut below_exset = BelowExSet::new();
     /// let event = below_exset.next_event();
-    /// assert!(below_exset.is_event(&event));
+    /// assert!(below_exset.is_event(event));
     ///
     /// below_exset.add_event(3);
-    /// assert!(!below_exset.is_event(&2));
-    /// assert!(below_exset.is_event(&3));
+    /// assert!(!below_exset.is_event(2));
+    /// assert!(below_exset.is_event(3));
     /// ```
-    fn is_event(&self, event: &u64) -> bool {
-        *event <= self.max && !self.exs.contains(event)
+    fn is_event(&self, event: u64) -> bool {
+        event <= self.max && !self.exs.contains(&event)
     }
 
     /// Returns all events seen as a tuple.
@@ -227,12 +227,16 @@ impl EventSet for BelowExSet {
         // - this means that the join does not create new exceptions
         //
         // keep the local exceptions that are not remote events
-        self.exs.retain(|ex| !other.is_event(ex));
+        self.exs.retain(|ex| !other.is_event(*ex));
 
         // keep the remote exceptions that are not local events
-        for ex in other.exs.iter().filter(|ex| !before.is_event(ex)) {
-            self.exs.insert(*ex);
-        }
+        other
+            .exs
+            .iter()
+            .filter(|&&ex| !before.is_event(ex))
+            .for_each(|&ex| {
+                self.exs.insert(ex);
+            });
 
         // the new max value is the max of both max values
         self.max = std::cmp::max(self.max, other.max);
@@ -248,12 +252,12 @@ impl BelowExSet {
     /// use threshold::*;
     ///
     /// let below_exset = BelowExSet::from(5, vec![1, 3]);
-    /// assert!(!below_exset.is_event(&1));
-    /// assert!(below_exset.is_event(&2));
-    /// assert!(!below_exset.is_event(&3));
-    /// assert!(below_exset.is_event(&4));
-    /// assert!(below_exset.is_event(&5));
-    /// assert!(!below_exset.is_event(&6));
+    /// assert!(!below_exset.is_event(1));
+    /// assert!(below_exset.is_event(2));
+    /// assert!(!below_exset.is_event(3));
+    /// assert!(below_exset.is_event(4));
+    /// assert!(below_exset.is_event(5));
+    /// assert!(!below_exset.is_event(6));
     /// ```
     pub fn from<I: IntoIterator<Item = u64>>(max: u64, iter: I) -> Self {
         BelowExSet {
@@ -285,7 +289,7 @@ impl Iterator for IntoIter {
 
             if self.exs.contains(&self.current) {
                 // if the next value is an exception, skip it
-                return self.next();
+                self.next()
             } else {
                 // otherwise, return it
                 Some(self.current)
@@ -320,5 +324,25 @@ impl IntoIterator for BelowExSet {
             max: self.max,
             exs: self.exs,
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn range() {
+        // add event 1 and 2 to eset
+        let mut eset = BelowExSet::new();
+        eset.add_event(1);
+        eset.add_event(2);
+
+        // create range
+        let start = 1;
+        let end = 2;
+
+        // check it's the same
+        assert_eq!(eset, BelowExSet::from_event_range(start, end));
     }
 }

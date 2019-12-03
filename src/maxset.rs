@@ -6,16 +6,16 @@
 //!
 //! let mut maxset = MaxSet::new();
 //! assert_eq!(maxset.next_event(), 1);
-//! assert!(maxset.is_event(&1));
-//! assert!(!maxset.is_event(&2));
+//! assert!(maxset.is_event(1));
+//! assert!(!maxset.is_event(2));
 //!
 //! let other = MaxSet::from_event(3);
-//! assert!(other.is_event(&1));
-//! assert!(other.is_event(&2));
-//! assert!(other.is_event(&3));
+//! assert!(other.is_event(1));
+//! assert!(other.is_event(2));
+//! assert!(other.is_event(3));
 //!
 //! maxset.join(&other);
-//! assert!(maxset.is_event(&3));
+//! assert!(maxset.is_event(3));
 //! ```
 
 use crate::EventSet;
@@ -55,12 +55,12 @@ impl EventSet for MaxSet {
     /// use threshold::*;
     ///
     /// let mut maxset = MaxSet::new();
-    /// assert!(!maxset.is_event(&9));
-    /// assert!(!maxset.is_event(&10));
+    /// assert!(!maxset.is_event(9));
+    /// assert!(!maxset.is_event(10));
     ///
     /// maxset.add_event(10);
-    /// assert!(maxset.is_event(&9));
-    /// assert!(maxset.is_event(&10));
+    /// assert!(maxset.is_event(9));
+    /// assert!(maxset.is_event(10));
     /// ```
     fn add_event(&mut self, event: u64) -> bool {
         if event <= self.max {
@@ -71,6 +71,16 @@ impl EventSet for MaxSet {
         }
     }
 
+    /// Adds a range of events to the set.
+    /// Returns `true` if a new event was added.
+    ///
+    /// In the case of `MaxSet` we have that:
+    /// - `add_event_range(start, end) == add_event(end)`
+    fn add_event_range(&mut self, start: u64, end: u64) -> bool {
+        assert!(start <= end);
+        self.add_event(end)
+    }
+
     /// Checks if an event is part of the set.
     ///
     /// # Examples
@@ -79,10 +89,10 @@ impl EventSet for MaxSet {
     ///
     /// let mut maxset = MaxSet::new();
     /// let event = maxset.next_event();
-    /// assert!(maxset.is_event(&event));
+    /// assert!(maxset.is_event(event));
     /// ```
-    fn is_event(&self, event: &u64) -> bool {
-        *event <= self.max
+    fn is_event(&self, event: u64) -> bool {
+        event <= self.max
     }
 
     /// Returns all events seen.
@@ -139,10 +149,10 @@ impl EventSet for MaxSet {
     /// use threshold::*;
     ///
     /// let mut maxset = MaxSet::from_event(10);
-    /// assert!(!maxset.is_event(&20));
+    /// assert!(!maxset.is_event(20));
     ///
     /// maxset.join(&MaxSet::from_event(20));
-    /// assert!(maxset.is_event(&20));
+    /// assert!(maxset.is_event(20));
     /// ```
     fn join(&mut self, other: &Self) {
         self.add_event(other.max);

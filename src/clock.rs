@@ -54,6 +54,7 @@ pub struct Clock<A: Actor, E: EventSet> {
 
 impl<A: Actor, E: EventSet> Clock<A, E> {
     /// Returns a new `Clock` instance.
+    #[allow(clippy::new_without_default)]
     pub fn new() -> Self {
         Clock {
             clock: HashMap::new(),
@@ -115,6 +116,25 @@ impl<A: Actor, E: EventSet> Clock<A, E> {
     /// ```
     pub fn len(&self) -> usize {
         self.clock.len()
+    }
+
+    /// Checks that a clock is empty.
+    ///
+    /// # Examples
+    /// ```
+    /// use threshold::*;
+    ///
+    /// let a = ("A", MaxSet::from_event(10));
+    /// let b = ("B", MaxSet::from_event(20));
+    /// let mut vclock = Clock::from(vec![a, b]);
+    ///
+    /// assert!(!vclock.is_empty());
+    ///
+    /// vclock = VClock::new();
+    /// assert!(vclock.is_empty());
+    /// ```
+    pub fn is_empty(&self) -> bool {
+        self.clock.is_empty()
     }
 
     /// Returns a new `Dot` for the `actor` while updating the clock.
@@ -195,6 +215,28 @@ impl<A: Actor, E: EventSet> Clock<A, E> {
         )
     }
 
+    /// Adds a range of events to the clock.
+    /// # Examples
+    /// ```
+    /// use threshold::*;
+    ///
+    /// let actor_a = "A";
+    /// let actor_b = "B";
+    ///
+    /// let mut clock_a = VClock::new();
+    /// clock_a.add_range(&actor_a, 10, 20);
+    /// assert!(clock_a.is_element(&Dot::new(&actor_a, 10)));
+    /// assert!(clock_a.is_element(&Dot::new(&actor_a, 11)));
+    /// assert!(!clock_a.is_element(&Dot::new(&actor_a, 21)));
+    /// ```
+    pub fn add_range(&mut self, actor: &A, start: u64, end: u64) -> bool {
+        self.upsert(
+            actor,
+            |eset| eset.add_event_range(start, end),
+            || (E::from_event_range(start, end), true),
+        )
+    }
+
     /// Checks if an `Dot` is part of the clock.
     ///
     /// # Examples
@@ -221,7 +263,7 @@ impl<A: Actor, E: EventSet> Clock<A, E> {
     pub fn is_element(&self, dot: &Dot<A>) -> bool {
         self.clock
             .get(&dot.actor)
-            .map_or(false, |eset| eset.is_event(&dot.seq))
+            .map_or(false, |eset| eset.is_event(dot.seq))
     }
 
     /// Returns the clock frontier.

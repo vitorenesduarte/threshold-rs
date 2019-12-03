@@ -34,6 +34,7 @@ pub struct TClock<A: Actor, E: EventSet> {
 
 impl<A: Actor, E: EventSet> TClock<A, E> {
     /// Returns a new `TClock` instance.
+    #[allow(clippy::new_without_default)]
     pub fn new() -> Self {
         TClock {
             occurrences: HashMap::new(),
@@ -140,10 +141,7 @@ impl<A: Actor> TClock<A, MaxSet> {
                 .next()
                 // if there is an event that passes the threshold, return it
                 // otherwise, return `0`
-                .map_or_else(
-                    || MaxSet::new(),
-                    |(&seq, _)| MaxSet::from_event(seq),
-                );
+                .map_or_else(MaxSet::new, |(&seq, _)| MaxSet::from_event(seq));
 
             (actor.clone(), seq)
         });

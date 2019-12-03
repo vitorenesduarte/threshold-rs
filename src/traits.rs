@@ -18,7 +18,7 @@ impl Count for u64 {
 
     /// Add to the count.
     fn add(&mut self, other: Self) {
-        *self = *self + other;
+        *self += other;
     }
 }
 
@@ -30,8 +30,8 @@ impl Count for (u64, u64) {
 
     /// Add to the count.
     fn add(&mut self, other: Self) {
-        self.0 = self.0 + other.0;
-        self.1 = self.1 + other.1;
+        self.0 += other.0;
+        self.1 += other.1;
     }
 }
 
@@ -51,6 +51,13 @@ pub trait EventSet: IntoIterator + Clone + Debug {
         eset
     }
 
+    /// Creates a new instance from a range of events.
+    fn from_event_range(start: u64, end: u64) -> Self {
+        let mut eset = Self::new();
+        eset.add_event_range(start, end);
+        eset
+    }
+
     /// Creates a new instance from several `events`.
     fn from_events<I: IntoIterator<Item = u64>>(iter: I) -> Self {
         let mut eset = Self::new();
@@ -66,8 +73,18 @@ pub trait EventSet: IntoIterator + Clone + Debug {
     /// Adds an event to the set.
     fn add_event(&mut self, event: u64) -> bool;
 
+    /// Adds a range of events to the set.
+    fn add_event_range(&mut self, start: u64, end: u64) -> bool {
+        let mut res = false;
+        (start..=end).for_each(|event| {
+            let added = self.add_event(event);
+            res = res || added;
+        });
+        res
+    }
+
     /// Checks if an event is part of the set.
-    fn is_event(&self, event: &u64) -> bool;
+    fn is_event(&self, event: u64) -> bool;
 
     /// Returns all events seen as a pair.
     ///
