@@ -19,8 +19,9 @@
 //! ```
 
 use crate::EventSet;
+use std::fmt;
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Clone, PartialEq, Eq)]
 pub struct MaxSet {
     // Highest event seen
     max: u64,
@@ -205,5 +206,11 @@ impl IntoIterator for MaxSet {
             current: 0,
             max: self.max,
         }
+    }
+}
+
+impl fmt::Debug for MaxSet {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.max)
     }
 }

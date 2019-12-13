@@ -22,9 +22,10 @@
 
 use crate::EventSet;
 use std::collections::BTreeSet;
+use std::fmt;
 use std::iter::FromIterator;
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Clone, PartialEq, Eq)]
 pub struct AboveExSet {
     // Highest contiguous event seen
     max: u64,
@@ -315,5 +316,11 @@ impl IntoIterator for AboveExSet {
             max: self.max,
             exs: self.exs.into_iter(),
         }
+    }
+}
+
+impl fmt::Debug for AboveExSet {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "({} + {:?})", self.max, self.exs)
     }
 }

@@ -23,9 +23,10 @@
 use crate::EventSet;
 use std::cmp::Ordering;
 use std::collections::HashSet;
+use std::fmt;
 use std::iter::FromIterator;
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Clone, PartialEq, Eq)]
 pub struct BelowExSet {
     // Highest event seen
     max: u64,
@@ -324,6 +325,12 @@ impl IntoIterator for BelowExSet {
             max: self.max,
             exs: self.exs,
         }
+    }
+}
+
+impl fmt::Debug for BelowExSet {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "({} - {:?})", self.max, self.exs)
     }
 }
 
