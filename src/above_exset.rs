@@ -321,6 +321,10 @@ impl IntoIterator for AboveExSet {
 
 impl fmt::Debug for AboveExSet {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "({} + {:?})", self.max, self.exs)
+        if self.exs.is_empty() {
+            write!(f, "{}", self.max)
+        } else {
+            write!(f, "({} + {:?})", self.max, self.exs)
+        }
     }
 }
