@@ -300,8 +300,8 @@ impl<A: Actor, E: EventSet> Clock<A, E> {
     /// let aset = AboveExSet::from_events(vec![1, 2, 4]);
     /// let bset = AboveExSet::from_events(vec![1, 2, 3, 5]);
     /// let clock = Clock::from(vec![("A", aset), ("B", bset)]);
-    /// assert_eq!(clock.frontier_threshold(1), Some(2));
-    /// assert_eq!(clock.frontier_threshold(2), Some(3));
+    /// assert_eq!(clock.frontier_threshold(1), Some(3));
+    /// assert_eq!(clock.frontier_threshold(2), Some(2));
     /// assert_eq!(clock.frontier_threshold(3), None);
     ///
     /// let aset = AboveExSet::from_events(vec![1, 2, 3, 5]);
@@ -311,24 +311,32 @@ impl<A: Actor, E: EventSet> Clock<A, E> {
     /// assert_eq!(clock.frontier_threshold(2), Some(3));
     ///
     /// let clock = clock::vclock_from_seqs(vec![2, 1, 3]);
-    /// assert_eq!(clock.frontier_threshold(1), Some(1));
+    /// assert_eq!(clock.frontier_threshold(1), Some(3));
     /// assert_eq!(clock.frontier_threshold(2), Some(2));
-    /// assert_eq!(clock.frontier_threshold(3), Some(3));
+    /// assert_eq!(clock.frontier_threshold(3), Some(1));
     ///
     /// let clock = clock::vclock_from_seqs(vec![4, 4, 5, 3, 2]);
-    /// assert_eq!(clock.frontier_threshold(1), Some(2));
-    /// assert_eq!(clock.frontier_threshold(2), Some(3));
+    /// assert_eq!(clock.frontier_threshold(1), Some(5));
+    /// assert_eq!(clock.frontier_threshold(2), Some(4));
     /// assert_eq!(clock.frontier_threshold(3), Some(4));
-    /// assert_eq!(clock.frontier_threshold(4), Some(4));
-    /// assert_eq!(clock.frontier_threshold(5), Some(5));
+    /// assert_eq!(clock.frontier_threshold(4), Some(3));
+    /// assert_eq!(clock.frontier_threshold(5), Some(2));
     /// assert_eq!(clock.frontier_threshold(6), None);
     /// ```
     pub fn frontier_threshold(&self, threshold: usize) -> Option<u64> {
         assert!(threshold > 0);
-        let mut frontiers: Vec<_> =
-            self.clock.iter().map(|(_, eset)| eset.frontier()).collect();
-        frontiers.sort_unstable();
-        frontiers.into_iter().nth(threshold - 1)
+        let clock_size = self.clock.len();
+        if threshold <= clock_size {
+            // get frontiers and sort them
+            let mut frontiers: Vec<_> =
+                self.clock.iter().map(|(_, eset)| eset.frontier()).collect();
+            frontiers.sort_unstable();
+
+            // get the frontier at the correct threshold
+            frontiers.into_iter().nth(clock_size - threshold)
+        } else {
+            None
+        }
     }
 
     /// Merges vector clock `other` passed as argument into `self`.
