@@ -23,7 +23,10 @@ fn vclock_threshold(
 
     thresholds.into_iter().all(|threshold| {
         // compute the threshold union
-        let clock = tclock.threshold_union(threshold as u64);
+        let (clock, equal_to_union) = tclock.threshold_union(threshold as u64);
+
+        // prop: if threshold is 1, then threshold union must be the same as union
+        let result1 = if threshold == 1 { equal_to_union } else { true };
 
         // compute the number of occurrences of `dot` in `clocks`
         let occurrences =
@@ -31,11 +34,13 @@ fn vclock_threshold(
 
         // prop: if the `dot` is in the resulting `clock`, then its number of
         // occurrences is >= `threshold`
-        if clock.is_element(&dot) {
+        let result2 = if clock.is_element(&dot) {
             occurrences >= threshold
         } else {
             occurrences < threshold
-        }
+        };
+
+        result1 && result2
     })
 }
 

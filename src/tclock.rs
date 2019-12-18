@@ -16,8 +16,8 @@
 //! let vclock_t1 = clock::vclock_from_seqs(vec![10, 10, 6]);
 //! let vclock_t2 = clock::vclock_from_seqs(vec![8, 5, 5]);
 //!
-//! assert_eq!(tclock.threshold_union(1), vclock_t1);
-//! assert_eq!(tclock.threshold_union(2), vclock_t2);
+//! assert_eq!(tclock.threshold_union(1), (vclock_t1, true));
+//! assert_eq!(tclock.threshold_union(2), (vclock_t2, false));
 //! ```
 
 use crate::*;
@@ -71,18 +71,10 @@ impl<A: Actor, E: EventSet> TClock<A, E> {
     fn add_entry(&mut self, actor: A, eset: E) {
         // compute event count
         let count = event_count(eset);
-
-        match self.occurrences.get_mut(&actor) {
-            Some(mset) => {
-                // if we have other events from this actor
-                // add new events to its multiset
-                mset.add(count);
-            }
-            None => {
-                // otherwise create a new multiset for this actor
-                self.occurrences.insert(actor, MultiSet::from(count));
-            }
-        }
+        // get current multi set for this actor
+        let mset = self.occurrences.entry(actor).or_insert_with(MultiSet::new);
+        // add new events
+        mset.add(count);
     }
 }
 
@@ -124,37 +116,47 @@ impl<A: Actor> TClock<A, MaxSet> {
     /// let vclock_t2 = clock::vclock_from_seqs(vec![9, 8, 6]);
     /// let vclock_t3 = clock::vclock_from_seqs(vec![8, 5, 5]);
     ///
-    /// assert_eq!(tclock.threshold_union(1), vclock_t1);
-    /// assert_eq!(tclock.threshold_union(2), vclock_t2);
-    /// assert_eq!(tclock.threshold_union(3), vclock_t3);
+    /// assert_eq!(tclock.threshold_union(1), (vclock_t1, true));
+    /// assert_eq!(tclock.threshold_union(2), (vclock_t2, false));
+    /// assert_eq!(tclock.threshold_union(3), (vclock_t3, false));
     /// ```
-    pub fn threshold_union(&self, threshold: u64) -> VClock<A> {
+    pub fn threshold_union(&self, threshold: u64) -> (VClock<A>, bool) {
+        // a threshold union is equal to union if the threshold clock contains the highest sequence
+        // seen for each process
+        let mut equal_to_union = true;
+
         let iter = self.occurrences.iter().map(|(actor, tset)| {
-            let mut total_pos = 0;
+            let mut total_positives = 0;
 
             // get the highest sequence that passes the threshold
             let seq = tset
                 .iter()
                 .rev()
-                .skip_while(|(_, &(pos, _))| {
+                .skip_while(|(_, &(positives, _))| {
                     // `total_pos` records the implicit number of observations:
                     // since we are iterating from the highest event to the
                     // lowest, and the observation of event X counts as an
                     // observation of event Y when X > Y, we can simply
                     // accumulate all observations in `total_pos` and stop the
                     // `skip_while` once `total_pos` passes the threshold
-                    total_pos += pos;
-                    total_pos < threshold
+                    total_positives += positives;
+                    total_positives < threshold
                 })
                 .next()
                 // if there is an event that passes the threshold, return it
                 // otherwise, return `0`
-                .map_or_else(MaxSet::new, |(&seq, _)| MaxSet::from_event(seq));
+                .map_or(0, |(&seq, _)| seq);
 
-            (actor.clone(), seq)
+            // get highest sequence for this actor
+            let highest = tset.iter().rev().next().map_or(0, |(&seq, _)| seq);
+            // check if equal to union for this process
+            equal_to_union = equal_to_union && highest == seq;
+
+            // compute vclock entry
+            (actor.clone(), MaxSet::from_event(seq))
         });
 
-        VClock::from(iter)
+        (VClock::from(iter), equal_to_union)
     }
 }
 
