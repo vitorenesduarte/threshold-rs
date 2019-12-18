@@ -42,6 +42,14 @@ impl<A: Actor, E: EventSet> TClock<A, E> {
         }
     }
 
+    /// Returns a new `TClock` instance with a given capacity.
+    pub fn with_capacitiy(capacity: usize) -> Self {
+        TClock {
+            occurrences: HashMap::with_capacity(capacity),
+            phantom: PhantomData,
+        }
+    }
+
     /// Add a `Clock` to the `TClock`.
     ///
     /// # Examples
