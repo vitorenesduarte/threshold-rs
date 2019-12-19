@@ -358,14 +358,18 @@ impl IntoIterator for BelowExSet {
 }
 
 pub struct SubtractIter {
+    subtract: u64,
     iter: IntoIter,
 }
 
 impl SubtractIter {
-    fn new(current: u64, max: u64, exs: HashSet<u64>) -> Self {
-        SubtractIter {
-            iter: IntoIter { current, max, exs },
-        }
+    fn new(subtract: u64, max: u64, exs: HashSet<u64>) -> Self {
+        let iter = IntoIter {
+            current: 0,
+            max,
+            exs,
+        };
+        SubtractIter { subtract, iter }
     }
 }
 
@@ -373,7 +377,16 @@ impl Iterator for SubtractIter {
     type Item = u64;
 
     fn next(&mut self) -> Option<Self::Item> {
-        self.iter.next()
+        match self.iter.next() {
+            Some(event) => {
+                if event > self.subtract {
+                    Some(event)
+                } else {
+                    self.next()
+                }
+            }
+            None => None,
+        }
     }
 }
 
