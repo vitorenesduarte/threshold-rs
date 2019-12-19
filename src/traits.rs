@@ -41,6 +41,8 @@ impl<A: Debug + Clone + Hash + Eq + Ord> Actor for A {}
 
 /// EventSet trait to be implemented by `MaxSet`, `BelowExSet` and `AboveExSet`.
 pub trait EventSet: IntoIterator + Clone + Debug {
+    type SubtractIter: Iterator<Item = u64>;
+
     /// Returns a new instance.
     fn new() -> Self;
 
@@ -111,4 +113,7 @@ pub trait EventSet: IntoIterator + Clone + Debug {
 
     /// Merges `other` `EventSet` into `self`.
     fn join(&mut self, other: &Self);
+
+    /// Subtracts an event (and all events below it) from an event set.
+    fn subtract_iter(&self, subtract: u64) -> Self::SubtractIter;
 }

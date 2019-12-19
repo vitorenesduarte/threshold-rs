@@ -21,7 +21,7 @@
 //! ```
 
 use crate::EventSet;
-use std::cmp::Ordering;
+use std::cmp::{self, Ordering};
 use std::collections::HashSet;
 use std::fmt;
 use std::iter::FromIterator;
@@ -35,6 +35,8 @@ pub struct BelowExSet {
 }
 
 impl EventSet for BelowExSet {
+    type SubtractIter = SubtractIter;
+
     /// Returns a new `BelowExSet` instance.
     fn new() -> Self {
         BelowExSet {
@@ -240,7 +242,34 @@ impl EventSet for BelowExSet {
             });
 
         // the new max value is the max of both max values
-        self.max = std::cmp::max(self.max, other.max);
+        self.max = cmp::max(self.max, other.max);
+    }
+
+    /// Subtracts an event (and all events below it) from an event set.
+    ///
+    /// # Examples
+    /// ```
+    /// use threshold::*;
+    ///
+    /// let mut below_exset = BelowExSet::new();
+    /// below_exset.add_event(1);
+    /// below_exset.add_event(3);
+    /// below_exset.add_event(4);
+    ///
+    /// let mut iter = below_exset.subtract_iter(1);
+    /// assert_eq!(iter.next(), Some(3));
+    /// assert_eq!(iter.next(), Some(4));
+    /// assert_eq!(iter.next(), None);
+    ///
+    /// let mut iter = below_exset.subtract_iter(3);
+    /// assert_eq!(iter.next(), Some(4));
+    /// assert_eq!(iter.next(), None);
+    ///
+    /// let mut iter = below_exset.subtract_iter(4);
+    /// assert_eq!(iter.next(), None);
+    /// ```
+    fn subtract_iter(&self, subtract: u64) -> Self::SubtractIter {
+        SubtractIter::new(subtract, self.max, self.exs.clone())
     }
 }
 
@@ -325,6 +354,26 @@ impl IntoIterator for BelowExSet {
             max: self.max,
             exs: self.exs,
         }
+    }
+}
+
+pub struct SubtractIter {
+    iter: IntoIter,
+}
+
+impl SubtractIter {
+    fn new(current: u64, max: u64, exs: HashSet<u64>) -> Self {
+        SubtractIter {
+            iter: IntoIter { current, max, exs },
+        }
+    }
+}
+
+impl Iterator for SubtractIter {
+    type Item = u64;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.iter.next()
     }
 }
 

@@ -21,6 +21,7 @@
 //! ```
 
 use crate::EventSet;
+use std::cmp;
 use std::collections::BTreeSet;
 use std::fmt;
 use std::iter::FromIterator;
@@ -34,6 +35,8 @@ pub struct AboveExSet {
 }
 
 impl EventSet for AboveExSet {
+    type SubtractIter = SubtractIter;
+
     /// Returns a new `AboveExSet` instance.
     fn new() -> Self {
         AboveExSet {
@@ -203,7 +206,7 @@ impl EventSet for AboveExSet {
     /// ```
     fn join(&mut self, other: &Self) {
         // the new max value is the max of both max values
-        self.max = std::cmp::max(self.max, other.max);
+        self.max = cmp::max(self.max, other.max);
 
         // add all extras as extras
         other.exs.iter().for_each(|ex| {
@@ -212,6 +215,33 @@ impl EventSet for AboveExSet {
 
         // maybe compress
         self.try_compress();
+    }
+
+    /// Subtracts an event (and all events below it) from an event set.
+    ///
+    /// # Examples
+    /// ```
+    /// use threshold::*;
+    ///
+    /// let mut above_exset = AboveExSet::new();
+    /// above_exset.add_event(1);
+    /// above_exset.add_event(3);
+    /// above_exset.add_event(4);
+    ///
+    /// let mut iter = above_exset.subtract_iter(1);
+    /// assert_eq!(iter.next(), Some(3));
+    /// assert_eq!(iter.next(), Some(4));
+    /// assert_eq!(iter.next(), None);
+    ///
+    /// let mut iter = above_exset.subtract_iter(3);
+    /// assert_eq!(iter.next(), Some(4));
+    /// assert_eq!(iter.next(), None);
+    ///
+    /// let mut iter = above_exset.subtract_iter(4);
+    /// assert_eq!(iter.next(), None);
+    /// ```
+    fn subtract_iter(&self, subtract: u64) -> Self::SubtractIter {
+        SubtractIter::new(subtract, self.max, self.exs.clone())
     }
 }
 
@@ -315,6 +345,54 @@ impl IntoIterator for AboveExSet {
             current: 0,
             max: self.max,
             exs: self.exs.into_iter(),
+        }
+    }
+}
+
+pub struct SubtractIter {
+    // Subtracted value
+    subtract: u64,
+    // Last contiguous value returned by the iterator
+    current: u64,
+    // Last contiguous value that should be returned by the iterator
+    max: u64,
+    // Iterator of extras
+    exs: std::collections::btree_set::IntoIter<u64>,
+}
+
+impl SubtractIter {
+    fn new(subtract: u64, max: u64, exs: BTreeSet<u64>) -> Self {
+        let current = cmp::min(subtract, max);
+        SubtractIter {
+            subtract,
+            current,
+            max,
+            exs: exs.into_iter(),
+        }
+    }
+}
+
+impl Iterator for SubtractIter {
+    type Item = u64;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.current == self.max {
+            // we've reached the last contiguous, return elements from extras
+            // that are larger than `self.subtract`
+            match self.exs.next() {
+                Some(event) => {
+                    if event > self.subtract {
+                        Some(event)
+                    } else {
+                        self.next()
+                    }
+                }
+                None => None,
+            }
+        } else {
+            // compute next value
+            self.current += 1;
+            Some(self.current)
         }
     }
 }

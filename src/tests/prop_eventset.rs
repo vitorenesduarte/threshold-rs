@@ -79,6 +79,21 @@ fn frontier_below_exset(events: BTreeSet<u64>) -> TestResult {
     check_frontier::<BelowExSet>(events)
 }
 
+#[quickcheck]
+fn subtract_maxset(subtract: u64, events: BTreeSet<u64>) -> bool {
+    check_subtract_maxset(subtract, events)
+}
+
+#[quickcheck]
+fn subtract_above_exset(subtract: u64, events: BTreeSet<u64>) -> bool {
+    check_subtract::<AboveExSet>(subtract, events)
+}
+
+#[quickcheck]
+fn subtract_below_exset(subtract: u64, events: BTreeSet<u64>) -> bool {
+    check_subtract::<BelowExSet>(subtract, events)
+}
+
 // TODO this test currently will fail with `MaxSet` due to its special semantics
 // (events do not need to be added to be part of the set)
 fn check_add_event<E: EventSet>(
@@ -187,4 +202,40 @@ fn check_frontier<E: EventSet>(mut events: BTreeSet<u64>) -> TestResult {
         })
         .collect();
     TestResult::from_bool(eset.frontier() == frontier)
+}
+
+fn check_subtract_maxset(subtract: u64, events: BTreeSet<u64>) -> bool {
+    println!("IN: subtract {:?} | events {:?}", subtract, events);
+    // create event set from events
+    let eset = MaxSet::from_events(events.clone());
+
+    // compute subtracted
+    let subtracted: Vec<_> = eset.subtract_iter(subtract).collect();
+
+    // create expected
+    let max_event = events.into_iter().max().unwrap_or(0);
+    let expected: Vec<_> = ((subtract + 1)..=max_event).into_iter().collect();
+
+    println!("OUT: subtracted {:?} | expected {:?}", subtracted, expected);
+
+    subtracted == expected
+}
+
+fn check_subtract<E: EventSet>(subtract: u64, events: BTreeSet<u64>) -> bool {
+    println!("IN: subtract {:?} | events {:?}", subtract, events);
+    // create event set from events
+    let eset = E::from_events(events.clone());
+
+    // compute subtracted
+    let subtracted: Vec<_> = eset.subtract_iter(subtract).collect();
+
+    // create expected
+    let expected: Vec<_> = events
+        .into_iter()
+        .filter(|&event| event > subtract)
+        .collect();
+
+    println!("OUT: subtracted {:?} | expected {:?}", subtracted, expected);
+
+    subtracted == expected
 }
