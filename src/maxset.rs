@@ -19,7 +19,6 @@
 //! ```
 
 use crate::EventSet;
-use std::cmp;
 use std::fmt;
 
 #[derive(Clone, PartialEq, Eq)]
@@ -29,7 +28,7 @@ pub struct MaxSet {
 }
 
 impl EventSet for MaxSet {
-    type SubtractIter = SubtractIter;
+    type EventIter = EventIter;
 
     /// Returns a new `MaxSet` instance.
     fn new() -> Self {
@@ -162,7 +161,8 @@ impl EventSet for MaxSet {
         self.add_event(other.max);
     }
 
-    /// Subtracts an event (and all events below it) from an event set.
+    /// Returns a `MaxSet` event iterator with all events from lowest to
+    /// highest.
     ///
     /// # Examples
     /// ```
@@ -171,83 +171,28 @@ impl EventSet for MaxSet {
     /// let mut maxset = MaxSet::new();
     /// maxset.add_event(3);
     ///
-    /// let mut iter = maxset.subtract_iter(1);
-    /// assert_eq!(iter.next(), Some(2));
-    /// assert_eq!(iter.next(), Some(3));
-    /// assert_eq!(iter.next(), None);
-    ///
-    /// let mut iter = maxset.subtract_iter(3);
-    /// assert_eq!(iter.next(), None);
-    /// ```
-    fn subtract_iter(&self, subtract: u64) -> Self::SubtractIter {
-        SubtractIter::new(subtract, self.max)
-    }
-}
-
-pub struct IntoIter {
-    // Last value returned by the iterator
-    current: u64,
-    // Last value that should be returned by the iterator
-    max: u64,
-}
-
-impl Iterator for IntoIter {
-    type Item = u64;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        if self.current == self.max {
-            // we've reached the end of the iterator
-            None
-        } else {
-            // compute next value and return it
-            self.current += 1;
-            Some(self.current)
-        }
-    }
-}
-
-impl IntoIterator for MaxSet {
-    type Item = u64;
-    type IntoIter = IntoIter;
-
-    /// Returns a `MaxSet` into iterator with all events from lowest to highest.
-    ///
-    /// # Examples
-    /// ```
-    /// use threshold::*;
-    ///
-    /// let mut maxset = MaxSet::new();
-    /// maxset.add_event(3);
-    ///
-    /// let mut iter = maxset.into_iter();
+    /// let mut iter = maxset.event_iter();
     /// assert_eq!(iter.next(), Some(1));
     /// assert_eq!(iter.next(), Some(2));
     /// assert_eq!(iter.next(), Some(3));
     /// assert_eq!(iter.next(), None);
     /// ```
-    fn into_iter(self) -> Self::IntoIter {
-        IntoIter {
+    fn event_iter(self) -> Self::EventIter {
+        EventIter {
             current: 0,
             max: self.max,
         }
     }
 }
 
-pub struct SubtractIter {
+pub struct EventIter {
     // Last value returned by the iterator
     current: u64,
     // Last value that should be returned by the iterator
     max: u64,
 }
 
-impl SubtractIter {
-    fn new(subtract: u64, max: u64) -> Self {
-        let current = cmp::min(subtract, max);
-        SubtractIter { current, max }
-    }
-}
-
-impl Iterator for SubtractIter {
+impl Iterator for EventIter {
     type Item = u64;
 
     fn next(&mut self) -> Option<Self::Item> {

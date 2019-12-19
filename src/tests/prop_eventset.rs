@@ -80,18 +80,40 @@ fn frontier_below_exset(events: BTreeSet<u64>) -> TestResult {
 }
 
 #[quickcheck]
-fn subtract_maxset(subtract: u64, events: BTreeSet<u64>) -> bool {
-    check_subtract_maxset(subtract, events)
+fn subtract_maxset(events: BTreeSet<u64>, subtract: BTreeSet<u64>) -> bool {
+    check_subtract_maxset(events, subtract)
 }
 
 #[quickcheck]
-fn subtract_above_exset(subtract: u64, events: BTreeSet<u64>) -> bool {
-    check_subtract::<AboveExSet>(subtract, events)
+fn subtract_above_from_above(
+    events: BTreeSet<u64>,
+    subtract: BTreeSet<u64>,
+) -> bool {
+    check_subtract::<AboveExSet, AboveExSet>(events, subtract)
 }
 
 #[quickcheck]
-fn subtract_below_exset(subtract: u64, events: BTreeSet<u64>) -> bool {
-    check_subtract::<BelowExSet>(subtract, events)
+fn subtract_above_from_below(
+    events: BTreeSet<u64>,
+    subtract: BTreeSet<u64>,
+) -> bool {
+    check_subtract::<AboveExSet, BelowExSet>(events, subtract)
+}
+
+#[quickcheck]
+fn subtract_below_from_above(
+    events: BTreeSet<u64>,
+    subtract: BTreeSet<u64>,
+) -> bool {
+    check_subtract::<BelowExSet, AboveExSet>(events, subtract)
+}
+
+#[quickcheck]
+fn subtract_below_from_below(
+    events: BTreeSet<u64>,
+    subtract: BTreeSet<u64>,
+) -> bool {
+    check_subtract::<BelowExSet, BelowExSet>(events, subtract)
 }
 
 // TODO this test currently will fail with `MaxSet` due to its special semantics
@@ -204,32 +226,50 @@ fn check_frontier<E: EventSet>(mut events: BTreeSet<u64>) -> TestResult {
     TestResult::from_bool(eset.frontier() == frontier)
 }
 
-fn check_subtract_maxset(subtract: u64, events: BTreeSet<u64>) -> bool {
+fn check_subtract_maxset(
+    events: BTreeSet<u64>,
+    subtract: BTreeSet<u64>,
+) -> bool {
+    // find maximal values
+    let max_event = events.iter().max().map_or(0, |max| *max);
+    let max_subtract = subtract.iter().max().map_or(0, |max| *max);
+
     // create event set from events
-    let eset = MaxSet::from_events(events.clone());
+    let eset = MaxSet::from_events(events);
+
+    // create subtract
+    let subtract = MaxSet::from_events(subtract);
 
     // compute subtracted
-    let subtracted: Vec<_> = eset.subtract_iter(subtract).collect();
+    let subtracted: Vec<_> = crate::subtract_iter(eset, subtract).collect();
 
     // create expected
-    let max_event = events.into_iter().max().unwrap_or(0);
-    let expected: Vec<_> = ((subtract + 1)..=max_event).into_iter().collect();
+    let expected: Vec<_> =
+        ((max_subtract + 1)..=max_event).into_iter().collect();
 
     subtracted == expected
 }
 
-fn check_subtract<E: EventSet>(subtract: u64, events: BTreeSet<u64>) -> bool {
+fn check_subtract<E: EventSet, S: EventSet>(
+    events: BTreeSet<u64>,
+    subtract: BTreeSet<u64>,
+) -> bool {
+    // create expected
+    let expected: Vec<_> = events
+        .iter()
+        .filter(|event| !subtract.contains(event))
+        .filter(|event| **event != 0) // 0 is not a valid event
+        .cloned()
+        .collect();
+
     // create event set from events
     let eset = E::from_events(events.clone());
 
-    // compute subtracted
-    let subtracted: Vec<_> = eset.subtract_iter(subtract).collect();
+    // create event from subtracrt
+    let subtract = S::from_events(subtract.clone());
 
-    // create expected
-    let expected: Vec<_> = events
-        .into_iter()
-        .filter(|&event| event > subtract)
-        .collect();
+    // compute subtracted
+    let subtracted: Vec<_> = crate::subtract_iter(eset, subtract).collect();
 
     subtracted == expected
 }

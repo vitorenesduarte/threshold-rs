@@ -27,7 +27,7 @@ pub use crate::clock::{AEClock, BEClock, Clock, Dot, VClock};
 pub use crate::maxset::MaxSet;
 pub use crate::multiset::MultiSet;
 pub use crate::tclock::TClock;
-pub use crate::traits::{Actor, Count, EventSet};
+pub use crate::traits::{subtract_iter, Actor, Count, EventSet};
 
 // Tests
 #[cfg(test)]

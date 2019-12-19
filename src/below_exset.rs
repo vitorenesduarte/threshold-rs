@@ -35,7 +35,7 @@ pub struct BelowExSet {
 }
 
 impl EventSet for BelowExSet {
-    type SubtractIter = SubtractIter;
+    type EventIter = EventIter;
 
     /// Returns a new `BelowExSet` instance.
     fn new() -> Self {
@@ -245,31 +245,28 @@ impl EventSet for BelowExSet {
         self.max = cmp::max(self.max, other.max);
     }
 
-    /// Subtracts an event (and all events below it) from an event set.
+    /// Returns a `BelowExSet` event iterator with all events from lowest to
+    /// highest.
     ///
     /// # Examples
     /// ```
     /// use threshold::*;
     ///
     /// let mut below_exset = BelowExSet::new();
-    /// below_exset.add_event(1);
     /// below_exset.add_event(3);
-    /// below_exset.add_event(4);
+    /// below_exset.add_event(5);
     ///
-    /// let mut iter = below_exset.subtract_iter(1);
+    /// let mut iter = below_exset.event_iter();
     /// assert_eq!(iter.next(), Some(3));
-    /// assert_eq!(iter.next(), Some(4));
-    /// assert_eq!(iter.next(), None);
-    ///
-    /// let mut iter = below_exset.subtract_iter(3);
-    /// assert_eq!(iter.next(), Some(4));
-    /// assert_eq!(iter.next(), None);
-    ///
-    /// let mut iter = below_exset.subtract_iter(4);
+    /// assert_eq!(iter.next(), Some(5));
     /// assert_eq!(iter.next(), None);
     /// ```
-    fn subtract_iter(&self, subtract: u64) -> Self::SubtractIter {
-        SubtractIter::new(subtract, self.max, self.exs.clone())
+    fn event_iter(self) -> Self::EventIter {
+        EventIter {
+            current: 0,
+            max: self.max,
+            exs: self.exs,
+        }
     }
 }
 
@@ -297,7 +294,7 @@ impl BelowExSet {
     }
 }
 
-pub struct IntoIter {
+pub struct EventIter {
     // Last value returned by the iterator
     current: u64,
     // Last value that should be returned by the iterator
@@ -306,7 +303,7 @@ pub struct IntoIter {
     exs: HashSet<u64>,
 }
 
-impl Iterator for IntoIter {
+impl Iterator for EventIter {
     type Item = u64;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -324,68 +321,6 @@ impl Iterator for IntoIter {
                 // otherwise, return it
                 Some(self.current)
             }
-        }
-    }
-}
-
-impl IntoIterator for BelowExSet {
-    type Item = u64;
-    type IntoIter = IntoIter;
-
-    /// Returns a `BelowExSet` into iterator with all events from lowest to
-    /// highest.
-    ///
-    /// # Examples
-    /// ```
-    /// use threshold::*;
-    ///
-    /// let mut below_exset = BelowExSet::new();
-    /// below_exset.add_event(3);
-    /// below_exset.add_event(5);
-    ///
-    /// let mut iter = below_exset.into_iter();
-    /// assert_eq!(iter.next(), Some(3));
-    /// assert_eq!(iter.next(), Some(5));
-    /// assert_eq!(iter.next(), None);
-    /// ```
-    fn into_iter(self) -> Self::IntoIter {
-        IntoIter {
-            current: 0,
-            max: self.max,
-            exs: self.exs,
-        }
-    }
-}
-
-pub struct SubtractIter {
-    subtract: u64,
-    iter: IntoIter,
-}
-
-impl SubtractIter {
-    fn new(subtract: u64, max: u64, exs: HashSet<u64>) -> Self {
-        let iter = IntoIter {
-            current: 0,
-            max,
-            exs,
-        };
-        SubtractIter { subtract, iter }
-    }
-}
-
-impl Iterator for SubtractIter {
-    type Item = u64;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        match self.iter.next() {
-            Some(event) => {
-                if event > self.subtract {
-                    Some(event)
-                } else {
-                    self.next()
-                }
-            }
-            None => None,
         }
     }
 }

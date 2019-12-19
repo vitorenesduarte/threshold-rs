@@ -35,7 +35,7 @@ pub struct AboveExSet {
 }
 
 impl EventSet for AboveExSet {
-    type SubtractIter = SubtractIter;
+    type EventIter = EventIter;
 
     /// Returns a new `AboveExSet` instance.
     fn new() -> Self {
@@ -217,31 +217,28 @@ impl EventSet for AboveExSet {
         self.try_compress();
     }
 
-    /// Subtracts an event (and all events below it) from an event set.
+    /// Returns a `AboveExSet` event iterator with all events from lowest to
+    /// highest.
     ///
     /// # Examples
     /// ```
     /// use threshold::*;
     ///
     /// let mut above_exset = AboveExSet::new();
-    /// above_exset.add_event(1);
     /// above_exset.add_event(3);
-    /// above_exset.add_event(4);
+    /// above_exset.add_event(5);
     ///
-    /// let mut iter = above_exset.subtract_iter(1);
+    /// let mut iter = above_exset.event_iter();
     /// assert_eq!(iter.next(), Some(3));
-    /// assert_eq!(iter.next(), Some(4));
-    /// assert_eq!(iter.next(), None);
-    ///
-    /// let mut iter = above_exset.subtract_iter(3);
-    /// assert_eq!(iter.next(), Some(4));
-    /// assert_eq!(iter.next(), None);
-    ///
-    /// let mut iter = above_exset.subtract_iter(4);
+    /// assert_eq!(iter.next(), Some(5));
     /// assert_eq!(iter.next(), None);
     /// ```
-    fn subtract_iter(&self, subtract: u64) -> Self::SubtractIter {
-        SubtractIter::new(subtract, self.max, self.exs.clone())
+    fn event_iter(self) -> Self::EventIter {
+        EventIter {
+            current: 0,
+            max: self.max,
+            exs: self.exs.into_iter(),
+        }
     }
 }
 
@@ -295,7 +292,7 @@ impl AboveExSet {
     }
 }
 
-pub struct IntoIter {
+pub struct EventIter {
     // Last contiguous value returned by the iterator
     current: u64,
     // Last contiguous value that should be returned by the iterator
@@ -304,7 +301,7 @@ pub struct IntoIter {
     exs: std::collections::btree_set::IntoIter<u64>,
 }
 
-impl Iterator for IntoIter {
+impl Iterator for EventIter {
     type Item = u64;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -312,83 +309,6 @@ impl Iterator for IntoIter {
             // we've reached the last contiguous, just call next on the extras
             // iterator
             self.exs.next()
-        } else {
-            // compute next value
-            self.current += 1;
-            Some(self.current)
-        }
-    }
-}
-
-impl IntoIterator for AboveExSet {
-    type Item = u64;
-    type IntoIter = IntoIter;
-
-    /// Returns a `AboveExSet` into iterator with all events from lowest to
-    /// highest.
-    ///
-    /// # Examples
-    /// ```
-    /// use threshold::*;
-    ///
-    /// let mut above_exset = AboveExSet::new();
-    /// above_exset.add_event(3);
-    /// above_exset.add_event(5);
-    ///
-    /// let mut iter = above_exset.into_iter();
-    /// assert_eq!(iter.next(), Some(3));
-    /// assert_eq!(iter.next(), Some(5));
-    /// assert_eq!(iter.next(), None);
-    /// ```
-    fn into_iter(self) -> Self::IntoIter {
-        IntoIter {
-            current: 0,
-            max: self.max,
-            exs: self.exs.into_iter(),
-        }
-    }
-}
-
-pub struct SubtractIter {
-    // Subtracted value
-    subtract: u64,
-    // Last contiguous value returned by the iterator
-    current: u64,
-    // Last contiguous value that should be returned by the iterator
-    max: u64,
-    // Iterator of extras
-    exs: std::collections::btree_set::IntoIter<u64>,
-}
-
-impl SubtractIter {
-    fn new(subtract: u64, max: u64, exs: BTreeSet<u64>) -> Self {
-        let current = cmp::min(subtract, max);
-        SubtractIter {
-            subtract,
-            current,
-            max,
-            exs: exs.into_iter(),
-        }
-    }
-}
-
-impl Iterator for SubtractIter {
-    type Item = u64;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        if self.current == self.max {
-            // we've reached the last contiguous, return elements from extras
-            // that are larger than `self.subtract`
-            match self.exs.next() {
-                Some(event) => {
-                    if event > self.subtract {
-                        Some(event)
-                    } else {
-                        self.next()
-                    }
-                }
-                None => None,
-            }
         } else {
             // compute next value
             self.current += 1;

@@ -383,30 +383,32 @@ impl<A: Actor, E: EventSet> Clock<A, E> {
     /// clock.add_dot(&dot_a2);
     /// clock.add_dot(&dot_a3);
     ///
-    /// let subtracted: Vec<_> = clock.subtract_iter(&actor_a, 0).collect();
+    /// let subtract = MaxSet::from_event(0);
+    /// let subtracted: Vec<_> = clock.subtract_iter(&actor_a, subtract).collect();
     /// assert_eq!(subtracted, vec![1, 2, 3]);
     ///
-    /// let subtracted: Vec<_> = clock.subtract_iter(&actor_a, 1).collect();
+    /// let subtract = MaxSet::from_event(1);
+    /// let subtracted: Vec<_> = clock.subtract_iter(&actor_a, subtract).collect();
     /// assert_eq!(subtracted, vec![2, 3]);
     ///
-    /// let subtracted: Vec<_> = clock.subtract_iter(&actor_a, 2).collect();
+    /// let subtract = MaxSet::from_event(2);
+    /// let subtracted: Vec<_> = clock.subtract_iter(&actor_a, subtract).collect();
     /// assert_eq!(subtracted, vec![3]);
     ///
-    /// let subtracted: Vec<_> = clock.subtract_iter(&actor_a, 3).collect();
+    /// let subtract = MaxSet::from_event(3);
+    /// let subtracted: Vec<_> = clock.subtract_iter(&actor_a, subtract).collect();
     /// assert_eq!(subtracted, vec![]);
     /// ```
-    pub fn subtract_iter(
+    pub fn subtract_iter<S: EventSet>(
         &self,
         actor: &A,
-        subtract: u64,
+        subtract: S,
     ) -> impl Iterator<Item = u64> {
-        match self.clock.get(actor) {
-            Some(eset) => eset.subtract_iter(subtract),
-            None => {
-                let eset = E::new();
-                eset.subtract_iter(subtract)
-            }
-        }
+        let eset = match self.clock.get(actor) {
+            Some(eset) => eset.clone(),
+            None => E::new(),
+        };
+        crate::subtract_iter(eset, subtract)
     }
 }
 

@@ -27,7 +27,7 @@ fn join(aeclock_a: AEClock<Musk>, aeclock_b: AEClock<Musk>) -> bool {
 
     // prop: after merging b into a, all events in b are events in a
     aeclock_b.into_iter().all(|(actor, eset)| {
-        eset.into_iter().all(|seq| {
+        eset.event_iter().all(|seq| {
             let dot = Dot::new(&actor, seq);
             aeclock_a.is_element(&dot)
         })

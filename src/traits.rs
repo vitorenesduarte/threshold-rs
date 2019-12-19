@@ -40,9 +40,8 @@ pub trait Actor: Debug + Clone + Hash + Eq + Ord {}
 impl<A: Debug + Clone + Hash + Eq + Ord> Actor for A {}
 
 /// EventSet trait to be implemented by `MaxSet`, `BelowExSet` and `AboveExSet`.
-pub trait EventSet: IntoIterator + Clone + Debug {
-    type SubtractIter: Iterator<Item = u64>;
-
+pub trait EventSet: Clone + Debug {
+    type EventIter: Iterator<Item = u64>;
     /// Returns a new instance.
     fn new() -> Self;
 
@@ -114,6 +113,44 @@ pub trait EventSet: IntoIterator + Clone + Debug {
     /// Merges `other` `EventSet` into `self`.
     fn join(&mut self, other: &Self);
 
-    /// Subtracts an event (and all events below it) from an event set.
-    fn subtract_iter(&self, subtract: u64) -> Self::SubtractIter;
+    /// Returns an iterator containing all elements represented by this event
+    /// set.
+    fn event_iter(self) -> Self::EventIter;
+}
+
+pub fn subtract_iter<E, S>(from: E, subtract: S) -> SubtractIter<E, S>
+where
+    E: EventSet,
+    S: EventSet,
+{
+    SubtractIter {
+        event_iter: from.event_iter(),
+        subtract,
+    }
+}
+
+pub struct SubtractIter<E: EventSet, S> {
+    event_iter: E::EventIter,
+    subtract: S,
+}
+
+impl<E, S> Iterator for SubtractIter<E, S>
+where
+    E: EventSet,
+    S: EventSet,
+{
+    type Item = u64;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        match self.event_iter.next() {
+            Some(event) => {
+                if self.subtract.is_event(event) {
+                    self.next()
+                } else {
+                    Some(event)
+                }
+            }
+            None => None,
+        }
+    }
 }
