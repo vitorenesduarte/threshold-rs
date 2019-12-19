@@ -21,6 +21,7 @@
 //! ```
 
 use crate::EventSet;
+use std::cmp;
 use std::collections::BTreeSet;
 use std::fmt;
 use std::iter::FromIterator;
@@ -34,6 +35,8 @@ pub struct AboveExSet {
 }
 
 impl EventSet for AboveExSet {
+    type EventIter = EventIter;
+
     /// Returns a new `AboveExSet` instance.
     fn new() -> Self {
         AboveExSet {
@@ -203,7 +206,7 @@ impl EventSet for AboveExSet {
     /// ```
     fn join(&mut self, other: &Self) {
         // the new max value is the max of both max values
-        self.max = std::cmp::max(self.max, other.max);
+        self.max = cmp::max(self.max, other.max);
 
         // add all extras as extras
         other.exs.iter().for_each(|ex| {
@@ -212,6 +215,30 @@ impl EventSet for AboveExSet {
 
         // maybe compress
         self.try_compress();
+    }
+
+    /// Returns a `AboveExSet` event iterator with all events from lowest to
+    /// highest.
+    ///
+    /// # Examples
+    /// ```
+    /// use threshold::*;
+    ///
+    /// let mut above_exset = AboveExSet::new();
+    /// above_exset.add_event(3);
+    /// above_exset.add_event(5);
+    ///
+    /// let mut iter = above_exset.event_iter();
+    /// assert_eq!(iter.next(), Some(3));
+    /// assert_eq!(iter.next(), Some(5));
+    /// assert_eq!(iter.next(), None);
+    /// ```
+    fn event_iter(self) -> Self::EventIter {
+        EventIter {
+            current: 0,
+            max: self.max,
+            exs: self.exs.into_iter(),
+        }
     }
 }
 
@@ -265,7 +292,7 @@ impl AboveExSet {
     }
 }
 
-pub struct IntoIter {
+pub struct EventIter {
     // Last contiguous value returned by the iterator
     current: u64,
     // Last contiguous value that should be returned by the iterator
@@ -274,7 +301,7 @@ pub struct IntoIter {
     exs: std::collections::btree_set::IntoIter<u64>,
 }
 
-impl Iterator for IntoIter {
+impl Iterator for EventIter {
     type Item = u64;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -286,35 +313,6 @@ impl Iterator for IntoIter {
             // compute next value
             self.current += 1;
             Some(self.current)
-        }
-    }
-}
-
-impl IntoIterator for AboveExSet {
-    type Item = u64;
-    type IntoIter = IntoIter;
-
-    /// Returns a `AboveExSet` into iterator with all events from lowest to
-    /// highest.
-    ///
-    /// # Examples
-    /// ```
-    /// use threshold::*;
-    ///
-    /// let mut above_exset = AboveExSet::new();
-    /// above_exset.add_event(3);
-    /// above_exset.add_event(5);
-    ///
-    /// let mut iter = above_exset.into_iter();
-    /// assert_eq!(iter.next(), Some(3));
-    /// assert_eq!(iter.next(), Some(5));
-    /// assert_eq!(iter.next(), None);
-    /// ```
-    fn into_iter(self) -> Self::IntoIter {
-        IntoIter {
-            current: 0,
-            max: self.max,
-            exs: self.exs.into_iter(),
         }
     }
 }

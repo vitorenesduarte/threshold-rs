@@ -46,7 +46,7 @@ impl Arbitrary for MaxSet {
     }
 
     fn shrink(&self) -> Box<dyn Iterator<Item = MaxSet>> {
-        let vec: Vec<u64> = self.clone().into_iter().collect();
+        let vec: Vec<u64> = self.clone().event_iter().collect();
         Box::new(vec.shrink().map(|v| MaxSet::from_events(v)))
     }
 }
@@ -61,7 +61,7 @@ impl Arbitrary for AboveExSet {
     }
 
     fn shrink(&self) -> Box<dyn Iterator<Item = AboveExSet>> {
-        let vec: Vec<u64> = self.clone().into_iter().collect();
+        let vec: Vec<u64> = self.clone().event_iter().collect();
         Box::new(vec.shrink().map(|v| AboveExSet::from_events(v)))
     }
 }
@@ -76,22 +76,8 @@ impl Arbitrary for BelowExSet {
     }
 
     fn shrink(&self) -> Box<dyn Iterator<Item = BelowExSet>> {
-        let vec: Vec<u64> = self.clone().into_iter().collect();
+        let vec: Vec<u64> = self.clone().event_iter().collect();
         Box::new(vec.shrink().map(|v| BelowExSet::from_events(v)))
-    }
-}
-
-impl<A: Actor + Arbitrary> Arbitrary for Dot<A> {
-    fn arbitrary<G: Gen>(g: &mut G) -> Dot<A> {
-        let actor: A = Arbitrary::arbitrary(g);
-        let seq: u64 = Arbitrary::arbitrary(g);
-        // ensure `seq` is never 0
-        let seq = seq + 1;
-        Dot::new(&actor, seq)
-    }
-
-    fn shrink(&self) -> Box<dyn Iterator<Item = Dot<A>>> {
-        Box::new(std::iter::empty::<Dot<_>>())
     }
 }
 
@@ -118,16 +104,13 @@ mod test {
     #[test]
     fn no_shrink() {
         no_shrink_assert::<Musk>();
-        no_shrink_assert::<Dot<u64>>();
     }
 
     #[test]
     fn some_shrink() {
-        some_shrink_assert::<MultiSet<u64, u64>>();
         some_shrink_assert::<MaxSet>();
         some_shrink_assert::<AboveExSet>();
         some_shrink_assert::<BelowExSet>();
-        some_shrink_assert::<VClock<u64>>();
     }
 
     fn arbitrary<T: Arbitrary>() -> T {
@@ -142,10 +125,10 @@ mod test {
         }
     }
 
-    fn some_shrink_assert<T: Arbitrary + IntoIterator>() {
+    fn some_shrink_assert<T: Arbitrary + EventSet>() {
         for _ in 0..ITERATIONS {
             let a = arbitrary::<T>();
-            match a.clone().into_iter().count() {
+            match a.clone().event_iter().count() {
                 0 => (),
                 _ => assert!(a.shrink().count() > 0),
             }

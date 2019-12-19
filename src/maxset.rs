@@ -28,6 +28,8 @@ pub struct MaxSet {
 }
 
 impl EventSet for MaxSet {
+    type EventIter = EventIter;
+
     /// Returns a new `MaxSet` instance.
     fn new() -> Self {
         MaxSet { max: 0 }
@@ -158,16 +160,39 @@ impl EventSet for MaxSet {
     fn join(&mut self, other: &Self) {
         self.add_event(other.max);
     }
+
+    /// Returns a `MaxSet` event iterator with all events from lowest to
+    /// highest.
+    ///
+    /// # Examples
+    /// ```
+    /// use threshold::*;
+    ///
+    /// let mut maxset = MaxSet::new();
+    /// maxset.add_event(3);
+    ///
+    /// let mut iter = maxset.event_iter();
+    /// assert_eq!(iter.next(), Some(1));
+    /// assert_eq!(iter.next(), Some(2));
+    /// assert_eq!(iter.next(), Some(3));
+    /// assert_eq!(iter.next(), None);
+    /// ```
+    fn event_iter(self) -> Self::EventIter {
+        EventIter {
+            current: 0,
+            max: self.max,
+        }
+    }
 }
 
-pub struct IntoIter {
+pub struct EventIter {
     // Last value returned by the iterator
     current: u64,
     // Last value that should be returned by the iterator
     max: u64,
 }
 
-impl Iterator for IntoIter {
+impl Iterator for EventIter {
     type Item = u64;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -178,33 +203,6 @@ impl Iterator for IntoIter {
             // compute next value and return it
             self.current += 1;
             Some(self.current)
-        }
-    }
-}
-
-impl IntoIterator for MaxSet {
-    type Item = u64;
-    type IntoIter = IntoIter;
-
-    /// Returns a `MaxSet` into iterator with all events from lowest to highest.
-    ///
-    /// # Examples
-    /// ```
-    /// use threshold::*;
-    ///
-    /// let mut maxset = MaxSet::new();
-    /// maxset.add_event(3);
-    ///
-    /// let mut iter = maxset.into_iter();
-    /// assert_eq!(iter.next(), Some(1));
-    /// assert_eq!(iter.next(), Some(2));
-    /// assert_eq!(iter.next(), Some(3));
-    /// assert_eq!(iter.next(), None);
-    /// ```
-    fn into_iter(self) -> Self::IntoIter {
-        IntoIter {
-            current: 0,
-            max: self.max,
         }
     }
 }

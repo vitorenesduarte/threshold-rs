@@ -21,7 +21,7 @@
 //! ```
 
 use crate::EventSet;
-use std::cmp::Ordering;
+use std::cmp::{self, Ordering};
 use std::collections::HashSet;
 use std::fmt;
 use std::iter::FromIterator;
@@ -35,6 +35,8 @@ pub struct BelowExSet {
 }
 
 impl EventSet for BelowExSet {
+    type EventIter = EventIter;
+
     /// Returns a new `BelowExSet` instance.
     fn new() -> Self {
         BelowExSet {
@@ -240,7 +242,31 @@ impl EventSet for BelowExSet {
             });
 
         // the new max value is the max of both max values
-        self.max = std::cmp::max(self.max, other.max);
+        self.max = cmp::max(self.max, other.max);
+    }
+
+    /// Returns a `BelowExSet` event iterator with all events from lowest to
+    /// highest.
+    ///
+    /// # Examples
+    /// ```
+    /// use threshold::*;
+    ///
+    /// let mut below_exset = BelowExSet::new();
+    /// below_exset.add_event(3);
+    /// below_exset.add_event(5);
+    ///
+    /// let mut iter = below_exset.event_iter();
+    /// assert_eq!(iter.next(), Some(3));
+    /// assert_eq!(iter.next(), Some(5));
+    /// assert_eq!(iter.next(), None);
+    /// ```
+    fn event_iter(self) -> Self::EventIter {
+        EventIter {
+            current: 0,
+            max: self.max,
+            exs: self.exs,
+        }
     }
 }
 
@@ -268,7 +294,7 @@ impl BelowExSet {
     }
 }
 
-pub struct IntoIter {
+pub struct EventIter {
     // Last value returned by the iterator
     current: u64,
     // Last value that should be returned by the iterator
@@ -277,7 +303,7 @@ pub struct IntoIter {
     exs: HashSet<u64>,
 }
 
-impl Iterator for IntoIter {
+impl Iterator for EventIter {
     type Item = u64;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -295,35 +321,6 @@ impl Iterator for IntoIter {
                 // otherwise, return it
                 Some(self.current)
             }
-        }
-    }
-}
-
-impl IntoIterator for BelowExSet {
-    type Item = u64;
-    type IntoIter = IntoIter;
-
-    /// Returns a `BelowExSet` into iterator with all events from lowest to
-    /// highest.
-    ///
-    /// # Examples
-    /// ```
-    /// use threshold::*;
-    ///
-    /// let mut below_exset = BelowExSet::new();
-    /// below_exset.add_event(3);
-    /// below_exset.add_event(5);
-    ///
-    /// let mut iter = below_exset.into_iter();
-    /// assert_eq!(iter.next(), Some(3));
-    /// assert_eq!(iter.next(), Some(5));
-    /// assert_eq!(iter.next(), None);
-    /// ```
-    fn into_iter(self) -> Self::IntoIter {
-        IntoIter {
-            current: 0,
-            max: self.max,
-            exs: self.exs,
         }
     }
 }
