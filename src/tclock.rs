@@ -121,8 +121,8 @@ impl<A: Actor> TClock<A, MaxSet> {
     /// assert_eq!(tclock.threshold_union(3), (vclock_t3, false));
     /// ```
     pub fn threshold_union(&self, threshold: u64) -> (VClock<A>, bool) {
-        // a threshold union is equal to union if the threshold clock contains the highest sequence
-        // seen for each process
+        // a threshold union is equal to union if the threshold clock contains
+        // the highest sequence seen for each process
         let mut equal_to_union = true;
 
         let iter = self.occurrences.iter().map(|(actor, tset)| {
@@ -170,19 +170,19 @@ impl<A: Actor> TClock<A, BelowExSet> {
     ///
     /// let b = String::from("B");
     /// let mut clock_a = BEClock::new();
-    /// clock_a.add_dot(&Dot::new(&b, 5));
-    /// clock_a.add_dot(&Dot::new(&b, 6));
+    /// clock_a.add(&b, 5);
+    /// clock_a.add(&b, 6);
     ///
     /// let mut clock_b = BEClock::new();
-    /// clock_b.add_dot(&Dot::new(&b, 5));
-    /// clock_b.add_dot(&Dot::new(&b, 7));
+    /// clock_b.add(&b, 5);
+    /// clock_b.add(&b, 7);
     ///
     /// let mut tclock = TClock::new();
     /// tclock.add(clock_a);
     /// tclock.add(clock_b);
     ///
     /// let mut expected = BEClock::new();
-    /// expected.add_dot(&Dot::new(&b, 5));
+    /// expected.add(&b, 5);
     ///
     /// assert_eq!(tclock.threshold_union(2), expected);
     /// ```
@@ -315,13 +315,13 @@ fn regression_test() {
 
     // Clock { clock: {B: BelowExSet { max: 6, exs: {1, 2, 3, 4} }} }
     let mut clock_a = BEClock::new();
-    clock_a.add_dot(&Dot::new(&b, 5));
-    clock_a.add_dot(&Dot::new(&b, 6));
+    clock_a.add(&b, 5);
+    clock_a.add(&b, 6);
 
     // Clock { clock: {B: BelowExSet { max: 7, exs: {1, 2, 3, 4, 6} }} }
     let mut clock_b = BEClock::new();
-    clock_b.add_dot(&Dot::new(&b, 5));
-    clock_b.add_dot(&Dot::new(&b, 7));
+    clock_b.add(&b, 5);
+    clock_b.add(&b, 7);
 
     // add both clocks to the threshold clock
     let mut tclock = TClock::new();
@@ -333,7 +333,7 @@ fn regression_test() {
 
     // create the expected clock
     let mut expected = BEClock::new();
-    expected.add_dot(&Dot::new(&b, 5));
+    expected.add(&b, 5);
 
     assert_eq!(clock, expected);
 }

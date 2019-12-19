@@ -1,14 +1,21 @@
 use crate::tests::arbitrary::Musk;
 use crate::*;
+use quickcheck::TestResult;
 use quickcheck_macros::quickcheck;
 
 #[quickcheck]
 fn vclock_threshold(
-    dot: Dot<Musk>,
+    actor: Musk,
+    event: u64,
     clock_a: VClock<Musk>,
     clock_b: VClock<Musk>,
     clock_c: VClock<Musk>,
-) -> bool {
+) -> TestResult {
+    // event 0 is not allowed
+    if event == 0 {
+        return TestResult::discard();
+    }
+
     // create a vec with all clocks
     let clocks = vec![clock_a, clock_b, clock_c];
 
@@ -21,36 +28,46 @@ fn vclock_threshold(
     // create a vec with possible threshold values
     let thresholds = vec![1, 2, 3, 4];
 
-    thresholds.into_iter().all(|threshold| {
+    let result = thresholds.into_iter().all(|threshold| {
         // compute the threshold union
         let (clock, equal_to_union) = tclock.threshold_union(threshold as u64);
 
-        // prop: if threshold is 1, then threshold union must be the same as union
+        // prop: if threshold is 1, then threshold union must be the same as
+        // union
         let result1 = if threshold == 1 { equal_to_union } else { true };
 
         // compute the number of occurrences of `dot` in `clocks`
-        let occurrences =
-            clocks.iter().filter(|clock| clock.is_element(&dot)).count();
+        let occurrences = clocks
+            .iter()
+            .filter(|clock| clock.contains(&actor, event))
+            .count();
 
         // prop: if the `dot` is in the resulting `clock`, then its number of
         // occurrences is >= `threshold`
-        let result2 = if clock.is_element(&dot) {
+        let result2 = if clock.contains(&actor, event) {
             occurrences >= threshold
         } else {
             occurrences < threshold
         };
 
         result1 && result2
-    })
+    });
+
+    TestResult::from_bool(result)
 }
 
 #[quickcheck]
 fn beclock_threshold(
-    dot: Dot<Musk>,
+    actor: Musk,
+    event: u64,
     clock_a: BEClock<Musk>,
     clock_b: BEClock<Musk>,
     clock_c: BEClock<Musk>,
-) -> bool {
+) -> TestResult {
+    // event 0 is not allowed
+    if event == 0 {
+        return TestResult::discard();
+    }
     // create a vec with all clocks
     let clocks = vec![clock_a, clock_b, clock_c];
 
@@ -63,20 +80,24 @@ fn beclock_threshold(
     // create a vec with possible threshold values
     let thresholds = vec![1, 2, 3, 4];
 
-    thresholds.into_iter().all(|threshold| {
+    let result = thresholds.into_iter().all(|threshold| {
         // compute the threshold union
         let clock = tclock.threshold_union(threshold as u64);
 
         // compute the number of occurrences of `dot` in `clocks`
-        let occurrences =
-            clocks.iter().filter(|clock| clock.is_element(&dot)).count();
+        let occurrences = clocks
+            .iter()
+            .filter(|clock| clock.contains(&actor, event))
+            .count();
 
         // prop: if the `dot` is in the resulting `clock`, then its number of
         // occurrences is >= `threshold`
-        if clock.is_element(&dot) {
+        if clock.contains(&actor, event) {
             occurrences >= threshold
         } else {
             occurrences < threshold
         }
-    })
+    });
+
+    TestResult::from_bool(result)
 }

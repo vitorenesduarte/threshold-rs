@@ -10,11 +10,11 @@
 //! let mut clock_a = VClock::new();
 //! let mut clock_b = VClock::new();
 //!
-//! clock_a.next_dot(&actor_a);
-//! let dot_a2 = clock_a.next_dot(&actor_a);
+//! clock_a.next(&actor_a);
+//! let event = clock_a.next(&actor_a);
 //!
 //! clock_b.join(&clock_a);
-//! assert!(clock_b.is_element(&dot_a2));
+//! assert!(clock_b.contains(&actor_a, event));
 //! ```
 
 use crate::*;
@@ -27,24 +27,6 @@ pub type VClock<A> = Clock<A, MaxSet>;
 pub type AEClock<A> = Clock<A, AboveExSet>;
 // A Below Exception Clock is `Clock` with `BelowExSet` as `EventSet`.
 pub type BEClock<A> = Clock<A, BelowExSet>;
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Dot<A: Actor> {
-    /// Actor identifer
-    actor: A,
-    /// Sequence number
-    seq: u64,
-}
-
-impl<A: Actor> Dot<A> {
-    /// Returns a new `Dot` instance.
-    pub fn new(actor: &A, seq: u64) -> Self {
-        Dot {
-            actor: actor.clone(),
-            seq,
-        }
-    }
-}
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Clock<A: Actor, E: EventSet> {
@@ -93,8 +75,8 @@ impl<A: Actor, E: EventSet> Clock<A, E> {
     /// let b = ("B", MaxSet::from_event(20));
     /// let vclock = Clock::from(vec![a, b]);
     ///
-    /// assert!(vclock.is_element(&Dot::new(&"A", 9)));
-    /// assert!(!vclock.is_element(&Dot::new(&"A", 11)));
+    /// assert!(vclock.contains(&"A", 9));
+    /// assert!(!vclock.contains(&"A", 11));
     /// ```
     pub fn from<I: IntoIterator<Item = (A, E)>>(iter: I) -> Self {
         Clock {
@@ -137,7 +119,8 @@ impl<A: Actor, E: EventSet> Clock<A, E> {
         self.clock.is_empty()
     }
 
-    /// Returns a new `Dot` for the `actor` while updating the clock.
+    /// Returns the next event for the `actor` while updating its entry in the
+    /// clock.
     ///
     /// # Examples
     /// ```
@@ -147,22 +130,17 @@ impl<A: Actor, E: EventSet> Clock<A, E> {
     /// let actor_b = "B";
     ///
     /// let mut clock = VClock::new();
-    /// let dot_a1 = clock.next_dot(&actor_a);
-    /// assert_eq!(Dot::new(&actor_a, 1), dot_a1);
+    /// let next = clock.next(&actor_a);
+    /// assert_eq!(next, 1);
     ///
-    /// let dot_a2 = clock.next_dot(&actor_a);
-    /// assert_eq!(Dot::new(&actor_a, 2), dot_a2);
+    /// let next = clock.next(&actor_a);
+    /// assert_eq!(next, 2);
     ///
-    /// let dot_b1 = clock.next_dot(&actor_b);
-    /// assert_eq!(Dot::new(&actor_b, 1), dot_b1);
+    /// let next = clock.next(&actor_a);
+    /// assert_eq!(next, 3);
     /// ```
-    pub fn next_dot(&mut self, actor: &A) -> Dot<A> {
-        let seq = self.upsert(
-            actor,
-            |eset| eset.next_event(),
-            || (E::from_event(1), 1),
-        );
-        Dot::new(actor, seq)
+    pub fn next(&mut self, actor: &A) -> u64 {
+        self.upsert(actor, |eset| eset.next_event(), || (E::from_event(1), 1))
     }
 
     /// If the actor is in already the clock, its entry is updated using
@@ -182,9 +160,9 @@ impl<A: Actor, E: EventSet> Clock<A, E> {
         }
     }
 
-    /// Adds a `Dot` to the clock.
-    /// If the clock did not have this `Dot` present, `true` is returned.
-    /// If the clock did have this `Dot` present, `false` is returned.
+    /// Adds an event to the clock.
+    /// If the clock did not have this event present, `true` is returned.
+    /// If the clock did have this event present, `false` is returned.
     ///
     /// # Examples
     /// ```
@@ -193,20 +171,16 @@ impl<A: Actor, E: EventSet> Clock<A, E> {
     /// let actor_a = "A";
     /// let actor_b = "B";
     ///
-    /// let mut clock_a = VClock::new();
-    /// let mut clock_b = VClock::new();
+    /// let mut clock = VClock::new();
     ///
-    /// let dot_a1 = clock_a.next_dot(&actor_a);
+    /// assert!(!clock.contains(&actor_a, 1));
+    /// clock.add(&actor_a, 1);
+    /// assert!(clock.contains(&actor_a, 1));
     ///
-    /// assert!(!clock_b.is_element(&dot_a1));
-    /// clock_b.add_dot(&dot_a1);
-    /// assert!(clock_b.is_element(&dot_a1));
+    /// assert!(!clock.contains(&actor_b, 1));
+    /// clock.add(&actor_b, 1);
+    /// assert!(clock.contains(&actor_b, 1));
     /// ```
-    pub fn add_dot(&mut self, dot: &Dot<A>) -> bool {
-        self.add(&dot.actor, dot.seq)
-    }
-
-    /// Similar to `add_dot` but does not require a `Dot` instance.
     pub fn add(&mut self, actor: &A, seq: u64) -> bool {
         self.upsert(
             actor,
@@ -225,9 +199,9 @@ impl<A: Actor, E: EventSet> Clock<A, E> {
     ///
     /// let mut clock_a = VClock::new();
     /// clock_a.add_range(&actor_a, 10, 20);
-    /// assert!(clock_a.is_element(&Dot::new(&actor_a, 10)));
-    /// assert!(clock_a.is_element(&Dot::new(&actor_a, 11)));
-    /// assert!(!clock_a.is_element(&Dot::new(&actor_a, 21)));
+    /// assert!(clock_a.contains(&actor_a, 10));
+    /// assert!(clock_a.contains(&actor_a, 11));
+    /// assert!(!clock_a.contains(&actor_a, 21));
     /// ```
     pub fn add_range(&mut self, actor: &A, start: u64, end: u64) -> bool {
         self.upsert(
@@ -237,7 +211,7 @@ impl<A: Actor, E: EventSet> Clock<A, E> {
         )
     }
 
-    /// Checks if an `Dot` is part of the clock.
+    /// Checks if an event is part of the clock.
     ///
     /// # Examples
     /// ```
@@ -245,25 +219,21 @@ impl<A: Actor, E: EventSet> Clock<A, E> {
     ///
     /// let actor_a = "A";
     ///
-    /// let dot_a1 = Dot::new(&actor_a, 1);
-    /// let dot_a2 = Dot::new(&actor_a, 2);
-    /// let dot_a3 = Dot::new(&actor_a, 3);
-    ///
     /// let mut clock = VClock::new();
-    /// assert!(!clock.is_element(&dot_a1));
-    /// clock.add_dot(&dot_a1);
-    /// assert!(clock.is_element(&dot_a1));
-    /// assert!(!clock.is_element(&dot_a2));
+    /// assert!(!clock.contains(&actor_a, 1));
+    /// clock.add(&actor_a, 1);
+    /// assert!(clock.contains(&actor_a, 1));
+    /// assert!(!clock.contains(&actor_a, 2));
     ///
-    /// clock.add_dot(&dot_a3);
-    /// assert!(clock.is_element(&dot_a1));
-    /// assert!(clock.is_element(&dot_a2));
-    /// assert!(clock.is_element(&dot_a3));
+    /// clock.add(&actor_a, 3);
+    /// assert!(clock.contains(&actor_a, 1));
+    /// assert!(clock.contains(&actor_a, 2));
+    /// assert!(clock.contains(&actor_a, 3));
     /// ```
-    pub fn is_element(&self, dot: &Dot<A>) -> bool {
+    pub fn contains(&self, actor: &A, seq: u64) -> bool {
         self.clock
-            .get(&dot.actor)
-            .map_or(false, |eset| eset.is_event(dot.seq))
+            .get(actor)
+            .map_or(false, |eset| eset.is_event(seq))
     }
 
     /// Returns the clock frontier.
@@ -350,11 +320,11 @@ impl<A: Actor, E: EventSet> Clock<A, E> {
     /// let mut clock_a = VClock::new();
     /// let mut clock_b = VClock::new();
     ///
-    /// clock_a.next_dot(&actor_a);
-    /// let dot_a2 = clock_a.next_dot(&actor_a);
+    /// clock_a.next(&actor_a);
+    /// let event = clock_a.next(&actor_a);
     ///
     /// clock_b.join(&clock_a);
-    /// assert!(clock_b.is_element(&dot_a2));
+    /// assert!(clock_b.contains(&actor_a, event));
     /// ```
     pub fn join(&mut self, other: &Self) {
         for (actor, eset) in other.clock.iter() {
@@ -374,14 +344,10 @@ impl<A: Actor, E: EventSet> Clock<A, E> {
     ///
     /// let actor_a = "A";
     ///
-    /// let dot_a1 = Dot::new(&actor_a, 1);
-    /// let dot_a2 = Dot::new(&actor_a, 2);
-    /// let dot_a3 = Dot::new(&actor_a, 3);
-    ///
     /// let mut clock = VClock::new();
-    /// clock.add_dot(&dot_a1);
-    /// clock.add_dot(&dot_a2);
-    /// clock.add_dot(&dot_a3);
+    /// clock.add(&actor_a, 1);
+    /// clock.add(&actor_a, 2);
+    /// clock.add(&actor_a, 3);
     ///
     /// let subtract = MaxSet::from_event(0);
     /// let subtracted: Vec<_> = clock.subtract_iter(&actor_a, subtract).collect();
@@ -422,8 +388,8 @@ impl<A: Actor, E: EventSet> Clock<A, E> {
 /// use threshold::{clock, *};
 ///
 /// let clock = clock::vclock_from_seqs(vec![10, 20]);
-/// assert!(clock.is_element(&Dot::new(&0, 10)));
-/// assert!(clock.is_element(&Dot::new(&1, 20)));
+/// assert!(clock.contains(&0, 10));
+/// assert!(clock.contains(&1, 20));
 /// ```
 pub fn vclock_from_seqs<I: IntoIterator<Item = u64>>(iter: I) -> VClock<u64> {
     Clock::from(
@@ -454,9 +420,9 @@ impl<A: Actor, E: EventSet> IntoIterator for Clock<A, E> {
     /// use threshold::*;
     ///
     /// let mut clock = VClock::new();
-    /// clock.next_dot(&"A");
-    /// clock.next_dot(&"A");
-    /// clock.next_dot(&"B");
+    /// clock.next(&"A");
+    /// clock.next(&"A");
+    /// clock.next(&"B");
     ///
     /// for (actor, eset) in clock {
     ///     match actor {

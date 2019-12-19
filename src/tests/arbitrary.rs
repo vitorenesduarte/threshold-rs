@@ -81,20 +81,6 @@ impl Arbitrary for BelowExSet {
     }
 }
 
-impl<A: Actor + Arbitrary> Arbitrary for Dot<A> {
-    fn arbitrary<G: Gen>(g: &mut G) -> Dot<A> {
-        let actor: A = Arbitrary::arbitrary(g);
-        let seq: u64 = Arbitrary::arbitrary(g);
-        // ensure `seq` is never 0
-        let seq = seq + 1;
-        Dot::new(&actor, seq)
-    }
-
-    fn shrink(&self) -> Box<dyn Iterator<Item = Dot<A>>> {
-        Box::new(std::iter::empty::<Dot<_>>())
-    }
-}
-
 impl<A: Actor + Arbitrary, E: EventSet + Arbitrary> Arbitrary for Clock<A, E> {
     fn arbitrary<G: Gen>(g: &mut G) -> Clock<A, E> {
         let vec: Vec<(A, E)> = Arbitrary::arbitrary(g);
@@ -118,7 +104,6 @@ mod test {
     #[test]
     fn no_shrink() {
         no_shrink_assert::<Musk>();
-        no_shrink_assert::<Dot<u64>>();
     }
 
     #[test]
