@@ -205,7 +205,6 @@ fn check_frontier<E: EventSet>(mut events: BTreeSet<u64>) -> TestResult {
 }
 
 fn check_subtract_maxset(subtract: u64, events: BTreeSet<u64>) -> bool {
-    println!("IN: subtract {:?} | events {:?}", subtract, events);
     // create event set from events
     let eset = MaxSet::from_events(events.clone());
 
@@ -216,13 +215,10 @@ fn check_subtract_maxset(subtract: u64, events: BTreeSet<u64>) -> bool {
     let max_event = events.into_iter().max().unwrap_or(0);
     let expected: Vec<_> = ((subtract + 1)..=max_event).into_iter().collect();
 
-    println!("OUT: subtracted {:?} | expected {:?}", subtracted, expected);
-
     subtracted == expected
 }
 
 fn check_subtract<E: EventSet>(subtract: u64, events: BTreeSet<u64>) -> bool {
-    println!("IN: subtract {:?} | events {:?}", subtract, events);
     // create event set from events
     let eset = E::from_events(events.clone());
 
@@ -234,8 +230,6 @@ fn check_subtract<E: EventSet>(subtract: u64, events: BTreeSet<u64>) -> bool {
         .into_iter()
         .filter(|&event| event > subtract)
         .collect();
-
-    println!("OUT: subtracted {:?} | expected {:?}", subtracted, expected);
 
     subtracted == expected
 }
