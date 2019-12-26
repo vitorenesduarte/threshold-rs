@@ -4,7 +4,7 @@ use quickcheck::TestResult;
 use quickcheck_macros::quickcheck;
 
 #[quickcheck]
-fn vclock_threshold(
+fn vclock_threshold_union(
     actor: Musk,
     event: u64,
     clock_a: VClock<Musk>,
@@ -57,7 +57,27 @@ fn vclock_threshold(
 }
 
 #[quickcheck]
-fn beclock_threshold(
+fn vclock_union(clock_a: VClock<Musk>, clock_b: VClock<Musk>) -> TestResult {
+    // add all clocks to the threshold clock
+    let mut tclock = TClock::new();
+    tclock.add(clock_a.clone());
+    tclock.add(clock_b.clone());
+
+    // compute union
+    let (clock, all_equal) = tclock.union();
+
+    let result = if clock_a == clock_b {
+        // if the clocks are equal, then the resulting clock should be equal as well and the flag
+        // `all_equal` be true
+        clock == clock_a && all_equal
+    } else {
+        true
+    };
+    TestResult::from_bool(result)
+}
+
+#[quickcheck]
+fn beclock_threshold_union(
     actor: Musk,
     event: u64,
     clock_a: BEClock<Musk>,

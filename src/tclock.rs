@@ -121,7 +121,6 @@ impl<A: Actor> TClock<A, MaxSet> {
     /// assert_eq!(tclock.threshold_union(3), (vclock_t3, false));
     /// ```
     pub fn threshold_union(&self, threshold: u64) -> (VClock<A>, bool) {
-        // a threshold union is equal to union if the threshold clock contains
         // the highest sequence seen for each process
         let mut equal_to_union = true;
 
@@ -157,6 +156,53 @@ impl<A: Actor> TClock<A, MaxSet> {
         });
 
         (VClock::from(iter), equal_to_union)
+    }
+
+    /// Computes the union of all `VClock` added to the `TClock`.
+    /// A boolean is also returned indicating whether all `VClock` added are equal.
+    ///
+    /// # Examples
+    /// ```
+    /// use threshold::{clock, *};
+    ///
+    /// let vclock_0 = clock::vclock_from_seqs(vec![10, 5, 5]);
+    /// let vclock_1 = clock::vclock_from_seqs(vec![9, 8, 7]);
+    ///
+    /// let mut tclock = TClock::new();
+    /// tclock.add(vclock_0.clone());
+    /// tclock.add(vclock_1.clone());
+    ///
+    /// let expected = clock::vclock_from_seqs(vec![10, 8, 7]);
+    /// assert_eq!(tclock.union(), (expected, false));
+    ///
+    /// let mut tclock = TClock::new();
+    /// tclock.add(vclock_0.clone());
+    /// tclock.add(vclock_0.clone());
+    /// tclock.add(vclock_0.clone());
+    ///
+    /// let expected = clock::vclock_from_seqs(vec![10, 5, 5]);
+    /// assert_eq!(tclock.union(), (expected, true));
+    /// ```
+    pub fn union(&self) -> (VClock<A>, bool) {
+        let mut all_equal = true;
+
+        let iter = self.occurrences.iter().map(|(actor, tset)| {
+            // get the highest sequence
+            let mut tset = tset.iter().rev();
+            let (highest, _) = tset
+                .next()
+                .expect("there should be at least one event per actor");
+
+            // if there's another sequence, then the clocks reported are not all equal
+            if tset.next().is_some() {
+                all_equal = false;
+            }
+
+            // compute vclock entry
+            (actor.clone(), MaxSet::from_event(*highest))
+        });
+
+        (VClock::from(iter), all_equal)
     }
 }
 
