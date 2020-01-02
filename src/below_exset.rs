@@ -26,7 +26,7 @@ use std::collections::HashSet;
 use std::fmt;
 use std::iter::FromIterator;
 
-#[derive(Clone, PartialEq, Eq)]
+#[derive(Clone, PartialEq, Eq, Default)]
 pub struct BelowExSet {
     // Highest event seen
     max: u64,

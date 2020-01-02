@@ -21,7 +21,7 @@
 use crate::EventSet;
 use std::fmt;
 
-#[derive(Clone, PartialEq, Eq)]
+#[derive(Clone, PartialEq, Eq, Default)]
 pub struct MaxSet {
     // Highest event seen
     max: u64,

@@ -28,7 +28,7 @@ pub type AEClock<A> = Clock<A, AboveExSet>;
 // A Below Exception Clock is `Clock` with `BelowExSet` as `EventSet`.
 pub type BEClock<A> = Clock<A, BelowExSet>;
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub struct Clock<A: Actor, E: EventSet> {
     /// Mapping from actor identifier to an event set
     clock: HashMap<A, E>,
