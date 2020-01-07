@@ -26,6 +26,7 @@ use std::marker::PhantomData;
 
 type EventCount = (u64, u64);
 
+#[derive(Debug)]
 pub struct TClock<A: Actor, E: EventSet> {
     /// A `MultiSet` per `Actor`
     occurrences: HashMap<A, MultiSet<u64, EventCount>>,
@@ -159,7 +160,8 @@ impl<A: Actor> TClock<A, MaxSet> {
     }
 
     /// Computes the union of all `VClock` added to the `TClock`.
-    /// A boolean is also returned indicating whether all `VClock` added are equal.
+    /// A boolean is also returned indicating whether all `VClock` added are
+    /// equal.
     ///
     /// # Examples
     /// ```
@@ -193,7 +195,8 @@ impl<A: Actor> TClock<A, MaxSet> {
                 .next()
                 .expect("there should be at least one event per actor");
 
-            // if there's another sequence, then the clocks reported are not all equal
+            // if there's another sequence, then the clocks reported are not all
+            // equal
             if tset.next().is_some() {
                 all_equal = false;
             }
@@ -355,31 +358,103 @@ fn event_count<E: EventSet>(
     left_count.chain(right_count)
 }
 
-#[test]
-fn regression_test() {
-    let b = String::from("B");
+#[cfg(test)]
 
-    // Clock { clock: {B: BelowExSet { max: 6, exs: {1, 2, 3, 4} }} }
-    let mut clock_a = BEClock::new();
-    clock_a.add(&b, 5);
-    clock_a.add(&b, 6);
+mod tests {
+    use super::*;
 
-    // Clock { clock: {B: BelowExSet { max: 7, exs: {1, 2, 3, 4, 6} }} }
-    let mut clock_b = BEClock::new();
-    clock_b.add(&b, 5);
-    clock_b.add(&b, 7);
+    #[test]
+    fn regression_test_beclock() {
+        let b = String::from("B");
 
-    // add both clocks to the threshold clock
-    let mut tclock = TClock::new();
-    tclock.add(clock_a);
-    tclock.add(clock_b);
+        // Clock { clock: {B: BelowExSet { max: 6, exs: {1, 2, 3, 4} }} }
+        let mut clock_a = BEClock::new();
+        clock_a.add(&b, 5);
+        clock_a.add(&b, 6);
 
-    // compute the threshold union
-    let clock = tclock.threshold_union(2);
+        // Clock { clock: {B: BelowExSet { max: 7, exs: {1, 2, 3, 4, 6} }} }
+        let mut clock_b = BEClock::new();
+        clock_b.add(&b, 5);
+        clock_b.add(&b, 7);
 
-    // create the expected clock
-    let mut expected = BEClock::new();
-    expected.add(&b, 5);
+        // add both clocks to the threshold clock
+        let mut tclock = TClock::new();
+        tclock.add(clock_a);
+        tclock.add(clock_b);
 
-    assert_eq!(clock, expected);
+        // compute the threshold union
+        let clock = tclock.threshold_union(2);
+
+        // create the expected clock
+        let mut expected = BEClock::new();
+        expected.add(&b, 5);
+
+        assert_eq!(clock, expected);
+    }
+
+    #[test]
+    fn regression_test_vclock() {
+        // create tclock
+        let mut tclock = TClock::new();
+
+        // n = 5
+
+        // create clocks
+        let bottom = clock::vclock_from_seqs(vec![0, 0, 0, 0, 0]);
+        let c1 = clock::vclock_from_seqs(vec![1, 0, 0, 0, 0]);
+        let c2 = clock::vclock_from_seqs(vec![0, 1, 0, 0, 0]);
+        let both = clock::vclock_from_seqs(vec![1, 1, 0, 0, 0]);
+
+        // add first clock
+        tclock.add(c1.clone());
+
+        // compute threshold = 1
+        let (t1, equal_to_union) = tclock.threshold_union(1);
+        assert_eq!(t1, c1);
+        assert_eq!(equal_to_union, true);
+
+        // compute threshold = 2
+        let (t2, equal_to_union) = tclock.threshold_union(2);
+        assert_eq!(t2, bottom);
+        assert_eq!(equal_to_union, false);
+
+        // add second clock
+        tclock.add(c2.clone());
+
+        // compute threshold = 1 (it changes)
+        let (t1, equal_to_union) = tclock.threshold_union(1);
+        assert_eq!(t1, both);
+        assert_eq!(equal_to_union, true);
+
+        // compute threshold = 2 (doesn't change)
+        let (t2, equal_to_union) = tclock.threshold_union(2);
+        assert_eq!(t2, bottom);
+        assert_eq!(equal_to_union, false);
+
+        // add third clock (equal to the first)
+        tclock.add(c1.clone());
+
+        // compute threshold = 1 (doesn't change)
+        let (t1, equal_to_union) = tclock.threshold_union(1);
+        assert_eq!(t1, both);
+        assert_eq!(equal_to_union, true);
+
+        // compute threshold = 2 (it changes)
+        let (t2, equal_to_union) = tclock.threshold_union(2);
+        assert_eq!(t2, c1);
+        assert_eq!(equal_to_union, false);
+
+        // add fourth clock (equal to the second)
+        tclock.add(c2.clone());
+
+        // compute threshold = 1 (doesn't change)
+        let (t1, equal_to_union) = tclock.threshold_union(1);
+        assert_eq!(t1, both);
+        assert_eq!(equal_to_union, true);
+
+        // compute threshold = 2 (it changes)
+        let (t2, equal_to_union) = tclock.threshold_union(2);
+        assert_eq!(t2, both);
+        assert_eq!(equal_to_union, true);
+    }
 }
