@@ -19,9 +19,10 @@
 //! ```
 
 use crate::EventSet;
+use serde::{Deserialize, Serialize};
 use std::fmt;
 
-#[derive(Clone, PartialEq, Eq, Default)]
+#[derive(Clone, PartialEq, Eq, Default, Serialize, Deserialize)]
 pub struct MaxSet {
     // Highest event seen
     max: u64,

@@ -21,12 +21,13 @@
 //! ```
 
 use crate::EventSet;
+use serde::{Deserialize, Serialize};
 use std::cmp;
 use std::collections::BTreeSet;
 use std::fmt;
 use std::iter::FromIterator;
 
-#[derive(Clone, PartialEq, Eq, Default)]
+#[derive(Clone, PartialEq, Eq, Default, Serialize, Deserialize)]
 pub struct AboveExSet {
     // Highest contiguous event seen
     max: u64,

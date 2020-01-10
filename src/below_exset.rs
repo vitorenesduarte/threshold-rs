@@ -21,12 +21,13 @@
 //! ```
 
 use crate::EventSet;
+use serde::{Deserialize, Serialize};
 use std::cmp::{self, Ordering};
 use std::collections::HashSet;
 use std::fmt;
 use std::iter::FromIterator;
 
-#[derive(Clone, PartialEq, Eq, Default)]
+#[derive(Clone, PartialEq, Eq, Default, Serialize, Deserialize)]
 pub struct BelowExSet {
     // Highest event seen
     max: u64,
