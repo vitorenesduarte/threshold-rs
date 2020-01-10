@@ -1,6 +1,6 @@
 [package]
 name = "threshold"
-version = "0.6.3"
+version = "0.6.4"
 edition = "2018"
 
 description = "Threshold data structures"
@@ -20,6 +20,7 @@ travis-ci = { repository = "vitorenesduarte/threshold-rs" }
 coveralls = { repository = "vitorenesduarte/threshold-rs", branch = "master", service = "github" }
 
 [dependencies]
+serde = { version = "1.0", features = ["derive"] }
 
 [dev-dependencies]
 criterion = "0.2"

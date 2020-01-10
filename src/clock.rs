@@ -18,6 +18,7 @@
 //! ```
 
 use crate::*;
+use serde::{Deserialize, Serialize};
 use std::collections::hash_map::{self, HashMap};
 use std::iter::FromIterator;
 
@@ -28,7 +29,7 @@ pub type AEClock<A> = Clock<A, AboveExSet>;
 // A Below Exception Clock is `Clock` with `BelowExSet` as `EventSet`.
 pub type BEClock<A> = Clock<A, BelowExSet>;
 
-#[derive(Debug, Clone, PartialEq, Eq, Default)]
+#[derive(Debug, Clone, PartialEq, Eq, Default, Serialize, Deserialize)]
 pub struct Clock<A: Actor, E: EventSet> {
     /// Mapping from actor identifier to an event set
     clock: HashMap<A, E>,
