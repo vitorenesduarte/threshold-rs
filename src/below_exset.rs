@@ -39,6 +39,7 @@ impl EventSet for BelowExSet {
     type EventIter = EventIter;
 
     /// Returns a new `BelowExSet` instance.
+    #[inline]
     fn new() -> Self {
         BelowExSet {
             max: 0,
@@ -57,6 +58,7 @@ impl EventSet for BelowExSet {
     /// assert_eq!(below_exset.next_event(), 1);
     /// assert_eq!(below_exset.next_event(), 2);
     /// ```
+    #[inline]
     fn next_event(&mut self) -> u64 {
         self.max += 1;
         self.max
@@ -84,6 +86,7 @@ impl EventSet for BelowExSet {
     /// assert!(below_exset.is_event(2));
     /// assert!(below_exset.is_event(3));
     /// ```
+    #[inline]
     fn add_event(&mut self, event: u64) -> bool {
         match event.cmp(&self.max) {
             Ordering::Less => {
@@ -123,6 +126,7 @@ impl EventSet for BelowExSet {
     /// assert!(!below_exset.is_event(2));
     /// assert!(below_exset.is_event(3));
     /// ```
+    #[inline]
     fn is_event(&self, event: u64) -> bool {
         event <= self.max && !self.exs.contains(&event)
     }
@@ -152,6 +156,7 @@ impl EventSet for BelowExSet {
     /// below_exset.add_event(6);
     /// assert_eq!(below_exset.events(), (6, vec![5]));
     /// ```
+    #[inline]
     fn events(&self) -> (u64, Vec<u64>) {
         (self.max, self.exs.clone().into_iter().collect())
     }
@@ -185,6 +190,7 @@ impl EventSet for BelowExSet {
     /// below_exset.add_event(6);
     /// assert_eq!(below_exset.frontier(), 4);
     /// ```
+    #[inline]
     fn frontier(&self) -> u64 {
         // if there are no exceptions, then the highest contiguous event is
         // self.max otherwise, it's the smallest exception - 1
@@ -224,6 +230,7 @@ impl EventSet for BelowExSet {
     /// below_exset.join(&other);
     /// assert_eq!(below_exset.events(), (7, vec![6]));
     /// ```
+    #[inline]
     fn join(&mut self, other: &Self) {
         let before = self.clone();
 
@@ -262,6 +269,7 @@ impl EventSet for BelowExSet {
     /// assert_eq!(iter.next(), Some(5));
     /// assert_eq!(iter.next(), None);
     /// ```
+    #[inline]
     fn event_iter(self) -> Self::EventIter {
         EventIter {
             current: 0,
@@ -287,6 +295,7 @@ impl BelowExSet {
     /// assert!(below_exset.is_event(5));
     /// assert!(!below_exset.is_event(6));
     /// ```
+    #[inline]
     pub fn from<I: IntoIterator<Item = u64>>(max: u64, iter: I) -> Self {
         BelowExSet {
             max,

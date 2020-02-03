@@ -38,6 +38,7 @@ pub struct Clock<A: Actor, E: EventSet> {
 impl<A: Actor, E: EventSet> Clock<A, E> {
     /// Returns a new `Clock` instance.
     #[allow(clippy::new_without_default)]
+    #[inline]
     pub fn new() -> Self {
         Clock {
             clock: HashMap::new(),
@@ -59,6 +60,7 @@ impl<A: Actor, E: EventSet> Clock<A, E> {
     ///     HashMap::from_iter(vec![(&"A", 0), (&"B", 0)]),
     /// );
     /// ```
+    #[inline]
     pub fn with<I: IntoIterator<Item = A>>(iter: I) -> Self {
         Clock {
             clock: iter.into_iter().map(|actor| (actor, E::new())).collect(),
@@ -79,6 +81,7 @@ impl<A: Actor, E: EventSet> Clock<A, E> {
     /// assert!(vclock.contains(&"A", 9));
     /// assert!(!vclock.contains(&"A", 11));
     /// ```
+    #[inline]
     pub fn from<I: IntoIterator<Item = (A, E)>>(iter: I) -> Self {
         Clock {
             clock: HashMap::from_iter(iter),
@@ -97,6 +100,7 @@ impl<A: Actor, E: EventSet> Clock<A, E> {
     ///
     /// assert_eq!(vclock.len(), 2);
     /// ```
+    #[inline]
     pub fn len(&self) -> usize {
         self.clock.len()
     }
@@ -116,6 +120,7 @@ impl<A: Actor, E: EventSet> Clock<A, E> {
     /// vclock = VClock::new();
     /// assert!(vclock.is_empty());
     /// ```
+    #[inline]
     pub fn is_empty(&self) -> bool {
         self.clock.is_empty()
     }
@@ -140,6 +145,7 @@ impl<A: Actor, E: EventSet> Clock<A, E> {
     /// let next = clock.next(&actor_a);
     /// assert_eq!(next, 3);
     /// ```
+    #[inline]
     pub fn next(&mut self, actor: &A) -> u64 {
         self.upsert(actor, |eset| eset.next_event(), || (E::from_event(1), 1))
     }
@@ -182,6 +188,7 @@ impl<A: Actor, E: EventSet> Clock<A, E> {
     /// clock.add(&actor_b, 1);
     /// assert!(clock.contains(&actor_b, 1));
     /// ```
+    #[inline]
     pub fn add(&mut self, actor: &A, seq: u64) -> bool {
         self.upsert(
             actor,
@@ -204,6 +211,7 @@ impl<A: Actor, E: EventSet> Clock<A, E> {
     /// assert!(clock_a.contains(&actor_a, 11));
     /// assert!(!clock_a.contains(&actor_a, 21));
     /// ```
+    #[inline]
     pub fn add_range(&mut self, actor: &A, start: u64, end: u64) -> bool {
         self.upsert(
             actor,
@@ -231,6 +239,7 @@ impl<A: Actor, E: EventSet> Clock<A, E> {
     /// assert!(clock.contains(&actor_a, 2));
     /// assert!(clock.contains(&actor_a, 3));
     /// ```
+    #[inline]
     pub fn contains(&self, actor: &A, seq: u64) -> bool {
         self.clock
             .get(actor)
@@ -254,6 +263,7 @@ impl<A: Actor, E: EventSet> Clock<A, E> {
     ///     HashMap::from_iter(vec![(&"A", 2), (&"B", 3)])
     /// );
     /// ```
+    #[inline]
     pub fn frontier(&self) -> HashMap<&A, u64> {
         self.clock
             .iter()
@@ -294,6 +304,7 @@ impl<A: Actor, E: EventSet> Clock<A, E> {
     /// assert_eq!(clock.frontier_threshold(5), Some(2));
     /// assert_eq!(clock.frontier_threshold(6), None);
     /// ```
+    #[inline]
     pub fn frontier_threshold(&self, threshold: usize) -> Option<u64> {
         assert!(threshold > 0);
         let clock_size = self.clock.len();
@@ -327,6 +338,7 @@ impl<A: Actor, E: EventSet> Clock<A, E> {
     /// clock_b.join(&clock_a);
     /// assert!(clock_b.contains(&actor_a, event));
     /// ```
+    #[inline]
     pub fn join(&mut self, other: &Self) {
         for (actor, eset) in other.clock.iter() {
             self.upsert(
@@ -366,6 +378,7 @@ impl<A: Actor, E: EventSet> Clock<A, E> {
     /// let subtracted: Vec<_> = clock.subtract_iter(&actor_a, subtract).collect();
     /// assert_eq!(subtracted, vec![]);
     /// ```
+    #[inline]
     pub fn subtract_iter<S: EventSet>(
         &self,
         actor: &A,

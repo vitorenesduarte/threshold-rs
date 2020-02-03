@@ -36,6 +36,7 @@ pub struct TClock<A: Actor, E: EventSet> {
 impl<A: Actor, E: EventSet> TClock<A, E> {
     /// Returns a new `TClock` instance.
     #[allow(clippy::new_without_default)]
+    #[inline]
     pub fn new() -> Self {
         TClock {
             occurrences: HashMap::new(),
@@ -44,6 +45,7 @@ impl<A: Actor, E: EventSet> TClock<A, E> {
     }
 
     /// Returns a new `TClock` instance with a given capacity.
+    #[inline]
     pub fn with_capacitiy(capacity: usize) -> Self {
         TClock {
             occurrences: HashMap::with_capacity(capacity),
@@ -62,6 +64,7 @@ impl<A: Actor, E: EventSet> TClock<A, E> {
     /// let vclock = clock::vclock_from_seqs(1..10);
     /// tset.add(vclock);
     /// ```
+    #[inline]
     pub fn add(&mut self, clock: Clock<A, E>) {
         for (actor, eset) in clock {
             self.add_entry(actor, eset);
@@ -69,6 +72,7 @@ impl<A: Actor, E: EventSet> TClock<A, E> {
     }
 
     /// Adds a single clock entry to the `TClock`.
+    #[inline]
     fn add_entry(&mut self, actor: A, eset: E) {
         // compute event count
         let count = event_count(eset);
@@ -121,6 +125,7 @@ impl<A: Actor> TClock<A, MaxSet> {
     /// assert_eq!(tclock.threshold_union(2), (vclock_t2, false));
     /// assert_eq!(tclock.threshold_union(3), (vclock_t3, false));
     /// ```
+    #[inline]
     pub fn threshold_union(&self, threshold: u64) -> (VClock<A>, bool) {
         // the highest sequence seen for each process
         let mut equal_to_union = true;
@@ -185,6 +190,7 @@ impl<A: Actor> TClock<A, MaxSet> {
     /// let expected = clock::vclock_from_seqs(vec![10, 5, 5]);
     /// assert_eq!(tclock.union(), (expected, true));
     /// ```
+    #[inline]
     pub fn union(&self) -> (VClock<A>, bool) {
         let mut all_equal = true;
 
@@ -235,6 +241,7 @@ impl<A: Actor> TClock<A, BelowExSet> {
     ///
     /// assert_eq!(tclock.threshold_union(2), expected);
     /// ```
+    #[inline]
     pub fn threshold_union(&self, threshold: u64) -> BEClock<A> {
         let iter = self.occurrences.iter().map(|(actor, tset)| {
             let mut total_pos = 0;

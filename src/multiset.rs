@@ -32,6 +32,7 @@ pub struct MultiSet<E: Ord, C: Count> {
 impl<E: Ord, C: Count> MultiSet<E, C> {
     /// Returns a new `MultiSet` instance.
     #[allow(clippy::new_without_default)]
+    #[inline]
     pub fn new() -> Self {
         MultiSet {
             occurrences: BTreeMap::new(),
@@ -48,6 +49,7 @@ impl<E: Ord, C: Count> MultiSet<E, C> {
     /// assert_eq!(mset.count(&17), 1);
     /// assert_eq!(mset.count(&23), 2);
     /// ```
+    #[inline]
     pub fn from<I: IntoIterator<Item = (E, C)>>(iter: I) -> Self {
         MultiSet {
             occurrences: BTreeMap::from_iter(iter),
@@ -67,6 +69,7 @@ impl<E: Ord, C: Count> MultiSet<E, C> {
     /// assert_eq!(mset.count(&17), 1);
     /// assert_eq!(mset.count(&23), 2);
     /// ```
+    #[inline]
     pub fn add<I: IntoIterator<Item = (E, C)>>(&mut self, iter: I) {
         for (elem, by) in iter {
             self.add_elem(elem, by);
@@ -85,6 +88,7 @@ impl<E: Ord, C: Count> MultiSet<E, C> {
     /// mset.add_elem(17, 2);
     /// assert_eq!(mset.count(&17), 2);
     /// ```
+    #[inline]
     pub fn add_elem(&mut self, elem: E, by: C) {
         // increase element count
         let count = self.occurrences.entry(elem).or_insert_with(Count::zero);
@@ -111,6 +115,7 @@ impl<E: Ord, C: Count> MultiSet<E, C> {
     /// assert_eq!(mset.count(&42), 1);
     /// assert_eq!(mset.count(&108), 0);
     /// ```
+    #[inline]
     pub fn count(&self, elem: &E) -> C {
         self.occurrences
             .get(elem)
@@ -118,6 +123,7 @@ impl<E: Ord, C: Count> MultiSet<E, C> {
     }
 
     /// Returns a sorted (ASC) double ended iterator.
+    #[inline]
     pub fn iter(&self) -> impl DoubleEndedIterator<Item = (&E, &C)> {
         self.occurrences.iter()
     }
