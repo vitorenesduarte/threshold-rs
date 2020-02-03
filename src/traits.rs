@@ -46,7 +46,6 @@ pub trait EventSet: Clone + Debug + Default {
     fn new() -> Self;
 
     /// Creates a new instance from `event`.
-    #[inline]
     fn from_event(event: u64) -> Self {
         let mut eset = Self::new();
         eset.add_event(event);
@@ -54,7 +53,6 @@ pub trait EventSet: Clone + Debug + Default {
     }
 
     /// Creates a new instance from a range of events.
-    #[inline]
     fn from_event_range(start: u64, end: u64) -> Self {
         let mut eset = Self::new();
         eset.add_event_range(start, end);
@@ -62,7 +60,6 @@ pub trait EventSet: Clone + Debug + Default {
     }
 
     /// Creates a new instance from several `events`.
-    #[inline]
     fn from_events<I: IntoIterator<Item = u64>>(iter: I) -> Self {
         let mut eset = Self::new();
         for event in iter {

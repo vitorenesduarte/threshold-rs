@@ -32,7 +32,6 @@ impl EventSet for MaxSet {
     type EventIter = EventIter;
 
     /// Returns a new `MaxSet` instance.
-    #[inline]
     fn new() -> Self {
         MaxSet { max: 0 }
     }
@@ -47,7 +46,6 @@ impl EventSet for MaxSet {
     /// assert_eq!(maxset.next_event(), 1);
     /// assert_eq!(maxset.next_event(), 2);
     /// ```
-    #[inline]
     fn next_event(&mut self) -> u64 {
         self.max += 1;
         self.max
@@ -68,7 +66,6 @@ impl EventSet for MaxSet {
     /// assert!(maxset.is_event(9));
     /// assert!(maxset.is_event(10));
     /// ```
-    #[inline]
     fn add_event(&mut self, event: u64) -> bool {
         if event <= self.max {
             false
@@ -83,7 +80,6 @@ impl EventSet for MaxSet {
     ///
     /// In the case of `MaxSet` we have that:
     /// - `add_event_range(start, end) == add_event(end)`
-    #[inline]
     fn add_event_range(&mut self, start: u64, end: u64) -> bool {
         assert!(start <= end);
         self.add_event(end)
@@ -99,7 +95,6 @@ impl EventSet for MaxSet {
     /// let event = maxset.next_event();
     /// assert!(maxset.is_event(event));
     /// ```
-    #[inline]
     fn is_event(&self, event: u64) -> bool {
         event <= self.max
     }
@@ -115,7 +110,6 @@ impl EventSet for MaxSet {
     /// maxset.add_event(4);
     /// assert_eq!(maxset.events(), (4, vec![]));
     /// ```
-    #[inline]
     fn events(&self) -> (u64, Vec<u64>) {
         (self.max, vec![])
     }
@@ -148,7 +142,6 @@ impl EventSet for MaxSet {
     /// maxset.add_event(6);
     /// assert_eq!(maxset.frontier(), 6);
     /// ```
-    #[inline]
     fn frontier(&self) -> u64 {
         self.max
     }
@@ -165,7 +158,6 @@ impl EventSet for MaxSet {
     /// maxset.join(&MaxSet::from_event(20));
     /// assert!(maxset.is_event(20));
     /// ```
-    #[inline]
     fn join(&mut self, other: &Self) {
         self.add_event(other.max);
     }
@@ -186,7 +178,6 @@ impl EventSet for MaxSet {
     /// assert_eq!(iter.next(), Some(3));
     /// assert_eq!(iter.next(), None);
     /// ```
-    #[inline]
     fn event_iter(self) -> Self::EventIter {
         EventIter {
             current: 0,
