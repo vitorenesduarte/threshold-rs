@@ -26,6 +26,8 @@ use std::iter::FromIterator;
 pub type VClock<A> = Clock<A, MaxSet>;
 // An Above Exception Clock is `Clock` with `AboveExSet` as `EventSet`.
 pub type AEClock<A> = Clock<A, AboveExSet>;
+// An Above Range Clock is `Clock` with `AboveRangeSet` as `EventSet`.
+pub type ARClock<A> = Clock<A, AboveRangeSet>;
 // A Below Exception Clock is `Clock` with `BelowExSet` as `EventSet`.
 pub type BEClock<A> = Clock<A, BelowExSet>;
 
