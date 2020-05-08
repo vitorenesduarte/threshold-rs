@@ -10,6 +10,11 @@ fn add_event_above_exset(event: u64, events: BTreeSet<u64>) -> TestResult {
 }
 
 #[quickcheck]
+fn add_event_above_range_set(event: u64, events: BTreeSet<u64>) -> TestResult {
+    check_add_event::<AboveRangeSet>(event, events)
+}
+
+#[quickcheck]
 fn add_event_below_exset(event: u64, events: BTreeSet<u64>) -> TestResult {
     check_add_event::<BelowExSet>(event, events)
 }
@@ -21,6 +26,15 @@ fn add_event_range_above_exset(
     events: BTreeSet<u64>,
 ) -> TestResult {
     check_add_event_range::<AboveExSet>(start, end, events)
+}
+
+#[quickcheck]
+fn add_event_range_above_range_set(
+    start: u64,
+    end: u64,
+    events: BTreeSet<u64>,
+) -> TestResult {
+    check_add_event_range::<AboveRangeSet>(start, end, events)
 }
 
 #[quickcheck]
@@ -43,6 +57,11 @@ fn is_event_above_exset(events: Vec<u64>) -> bool {
 }
 
 #[quickcheck]
+fn is_event_above_range_set(events: Vec<u64>) -> bool {
+    check_is_event::<AboveRangeSet>(events)
+}
+
+#[quickcheck]
 fn is_event_below_exset(events: Vec<u64>) -> bool {
     check_is_event::<BelowExSet>(events)
 }
@@ -55,6 +74,11 @@ fn join_max_set(events_a: Vec<u64>, events_b: Vec<u64>) -> bool {
 #[quickcheck]
 fn join_above_exset(events_a: Vec<u64>, events_b: Vec<u64>) -> bool {
     check_join::<AboveExSet>(events_a, events_b)
+}
+
+#[quickcheck]
+fn join_above_range_set(events_a: Vec<u64>, events_b: Vec<u64>) -> bool {
+    check_join::<AboveRangeSet>(events_a, events_b)
 }
 
 #[quickcheck]
@@ -75,6 +99,11 @@ fn frontier_above_exset(events: BTreeSet<u64>) -> TestResult {
 }
 
 #[quickcheck]
+fn frontier_above_range_set(events: BTreeSet<u64>) -> TestResult {
+    check_frontier::<AboveRangeSet>(events)
+}
+
+#[quickcheck]
 fn frontier_below_exset(events: BTreeSet<u64>) -> TestResult {
     check_frontier::<BelowExSet>(events)
 }
@@ -85,7 +114,7 @@ fn subtract_maxset(events: BTreeSet<u64>, subtract: BTreeSet<u64>) -> bool {
 }
 
 #[quickcheck]
-fn subtract_above_from_above(
+fn subtract_above_exset_from_above_exset(
     events: BTreeSet<u64>,
     subtract: BTreeSet<u64>,
 ) -> bool {
@@ -93,7 +122,15 @@ fn subtract_above_from_above(
 }
 
 #[quickcheck]
-fn subtract_above_from_below(
+fn subtract_above_range_set_from_above_range_set(
+    events: BTreeSet<u64>,
+    subtract: BTreeSet<u64>,
+) -> bool {
+    check_subtract::<AboveRangeSet, AboveRangeSet>(events, subtract)
+}
+
+#[quickcheck]
+fn subtract_above_exset_from_below_exset(
     events: BTreeSet<u64>,
     subtract: BTreeSet<u64>,
 ) -> bool {
@@ -101,7 +138,15 @@ fn subtract_above_from_below(
 }
 
 #[quickcheck]
-fn subtract_below_from_above(
+fn subtract_above_range_set_from_below_exset(
+    events: BTreeSet<u64>,
+    subtract: BTreeSet<u64>,
+) -> bool {
+    check_subtract::<AboveRangeSet, BelowExSet>(events, subtract)
+}
+
+#[quickcheck]
+fn subtract_below_exset_from_above_exset(
     events: BTreeSet<u64>,
     subtract: BTreeSet<u64>,
 ) -> bool {
@@ -109,7 +154,15 @@ fn subtract_below_from_above(
 }
 
 #[quickcheck]
-fn subtract_below_from_below(
+fn subtract_below_exset_from_above_range_set(
+    events: BTreeSet<u64>,
+    subtract: BTreeSet<u64>,
+) -> bool {
+    check_subtract::<BelowExSet, AboveRangeSet>(events, subtract)
+}
+
+#[quickcheck]
+fn subtract_below_exset_from_below_exset(
     events: BTreeSet<u64>,
     subtract: BTreeSet<u64>,
 ) -> bool {
@@ -126,6 +179,9 @@ fn check_add_event<E: EventSet>(
     if event == 0 {
         return TestResult::discard();
     }
+
+    // prune all events from `events` that are higher than `event`
+    events = events.into_iter().filter(|&e| e > event).collect();
 
     // create event set from events
     let mut eset = E::from_events(events.clone());
@@ -166,6 +222,12 @@ fn check_add_event_range<E: EventSet>(
     if start == 0 || end == 0 || start > end {
         return TestResult::discard();
     }
+
+    // prune all events from `events` that are part of the range to be added
+    events = events
+        .into_iter()
+        .filter(|&e| e < start || e > end)
+        .collect();
 
     // create event set from events
     let mut eset = E::from_events(events.clone());

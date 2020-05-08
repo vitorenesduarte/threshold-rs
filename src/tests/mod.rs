@@ -1,5 +1,6 @@
 mod arbitrary;
 mod prop_aeclock;
+mod prop_arclock;
 mod prop_beclock;
 mod prop_eventset;
 mod prop_multiset;

@@ -1,15 +1,12 @@
+// Needed for BTreeMap
+#![feature(map_first_last)]
+
 // This module contains the definition of `Count`, `Actor` and `EventSet`
 // traits.
 mod traits;
 
-// This module contains the implementation of a Max Set.
-pub mod maxset;
-
-// This module contains the implementation of an Above-Extra Set.
-pub mod above_exset;
-
-// This module contains the implementation of a Below-Exception Set.
-pub mod below_exset;
+// This module contains implementations of the `EventSet` trait.
+mod set;
 
 // This module contains the implementation of a Clock.
 pub mod clock;
@@ -21,11 +18,12 @@ pub mod multiset;
 pub mod tclock;
 
 // Top-level re-exports.
-pub use crate::above_exset::AboveExSet;
-pub use crate::below_exset::BelowExSet;
-pub use crate::clock::{AEClock, BEClock, Clock, VClock};
-pub use crate::maxset::MaxSet;
+pub use crate::clock::{AEClock, ARClock, BEClock, Clock, VClock};
 pub use crate::multiset::MultiSet;
+pub use crate::set::AboveExSet;
+pub use crate::set::AboveRangeSet;
+pub use crate::set::BelowExSet;
+pub use crate::set::MaxSet;
 pub use crate::tclock::TClock;
 pub use crate::traits::{subtract_iter, Actor, Count, EventSet};
 
