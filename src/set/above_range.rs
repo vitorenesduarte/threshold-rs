@@ -30,7 +30,7 @@ use std::fmt;
 pub struct AboveRangeSet {
     // Highest contiguous event seen
     max: u64,
-    // Mapping from start of the range to its end (sorted ASC)
+    // Set of extra events encoded as ranges
     ranges: Ranges,
 }
 
