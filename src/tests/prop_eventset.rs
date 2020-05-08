@@ -180,6 +180,9 @@ fn check_add_event<E: EventSet>(
         return TestResult::discard();
     }
 
+    // prune all events from `events` that are higher than `event`
+    events = events.into_iter().filter(|&e| e > event).collect();
+
     // create event set from events
     let mut eset = E::from_events(events.clone());
 
@@ -219,6 +222,12 @@ fn check_add_event_range<E: EventSet>(
     if start == 0 || end == 0 || start > end {
         return TestResult::discard();
     }
+
+    // prune all events from `events` that are part of the range to be added
+    events = events
+        .into_iter()
+        .filter(|&e| e < start || e > end)
+        .collect();
 
     // create event set from events
     let mut eset = E::from_events(events.clone());
