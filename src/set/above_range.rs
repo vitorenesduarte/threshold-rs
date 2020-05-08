@@ -23,16 +23,21 @@
 use crate::EventSet;
 use serde::{Deserialize, Serialize};
 use std::cmp;
-use std::collections::BTreeSet;
+use std::collections::BTreeMap;
 use std::fmt;
-use std::iter::FromIterator;
 
 #[derive(Clone, PartialEq, Eq, Default, Serialize, Deserialize)]
 pub struct AboveRangeSet {
     // Highest contiguous event seen
     max: u64,
-    // Set of extra events above the highest (sorted ASC)
-    exs: BTreeSet<u64>,
+    // Mapping from start of the range to its end (sorted ASC)
+    ranges: Ranges,
+}
+
+#[derive(Clone, PartialEq, Eq, Default, Serialize, Deserialize)]
+pub struct Ranges {
+    // Mapping from start of the range to its end (sorted ASC)
+    ranges: BTreeMap<u64, u64>,
 }
 
 impl EventSet for AboveRangeSet {
@@ -42,7 +47,7 @@ impl EventSet for AboveRangeSet {
     fn new() -> Self {
         AboveRangeSet {
             max: 0,
-            exs: BTreeSet::new(),
+            ranges: Ranges::new(),
         }
     }
 
@@ -58,6 +63,7 @@ impl EventSet for AboveRangeSet {
     /// assert_eq!(above_exset.next_event(), 2);
     /// ```
     fn next_event(&mut self) -> u64 {
+        debug_assert!(self.ranges.is_empty());
         self.max += 1;
         self.max
     }
@@ -96,10 +102,9 @@ impl EventSet for AboveRangeSet {
             // new event, so `true`
             true
         } else if event > self.max + 1 {
-            // add as an extra. the result is the same as the result of the
-            // insert in the extras:
-            // - if it's a new extra, then it's also a new event
-            self.exs.insert(event)
+            // add as a range: assumes it's a new range
+            self.ranges.add(event, event);
+            true
         } else {
             // else it's already an event
             false
@@ -118,8 +123,8 @@ impl EventSet for AboveRangeSet {
             // new event, so `true`
             true
         } else if start > self.max + 1 {
-            // add all events as extra
-            self.exs.extend(start..=end);
+            // add as a range: assumes it's a new range
+            self.ranges.add(start, end);
             true
         } else {
             // else all events are already an event
@@ -142,7 +147,7 @@ impl EventSet for AboveRangeSet {
     /// assert!(above_exset.is_event(3));
     /// ```
     fn is_event(&self, event: u64) -> bool {
-        event <= self.max || self.exs.contains(&event)
+        event <= self.max || self.ranges.contains(&event)
     }
 
     /// Returns all events seen as a tuple.
@@ -171,7 +176,7 @@ impl EventSet for AboveRangeSet {
     /// assert_eq!(above_exset.events(), (4, vec![6]));
     /// ```
     fn events(&self) -> (u64, Vec<u64>) {
-        (self.max, self.exs.clone().into_iter().collect())
+        (self.max, self.ranges.clone().event_iter().collect())
     }
 
     /// Returns the frontier (the highest contiguous event seen).
@@ -230,10 +235,8 @@ impl EventSet for AboveRangeSet {
         // the new max value is the max of both max values
         self.max = cmp::max(self.max, other.max);
 
-        // add all extras as extras
-        other.exs.iter().for_each(|ex| {
-            self.exs.insert(*ex);
-        });
+        // join ranges
+        self.ranges.join(&other.ranges, self.max);
 
         // maybe compress
         self.try_compress();
@@ -259,7 +262,7 @@ impl EventSet for AboveRangeSet {
         EventIter {
             current: 0,
             max: self.max,
-            exs: self.exs.into_iter(),
+            ranges: self.ranges.event_iter(),
         }
     }
 }
@@ -267,28 +270,10 @@ impl EventSet for AboveRangeSet {
 impl AboveRangeSet {
     /// Tries to set a new max contiguous event.
     fn try_compress(&mut self) {
-        // bind the borrow to a new variable, as suggested here:
-        // - https://github.com/rust-lang/rust/issues/19004#issuecomment-63220141
-        let max = &mut self.max;
-
-        // only keep in extras those that can't be compressed
-        self.exs = self
-            .exs
-            .iter()
-            .skip_while(|&&extra| {
-                if extra == *max + 1 {
-                    // we have a new max
-                    *max = extra;
-
-                    // don't keep it in extras
-                    true
-                } else {
-                    // keep it in extras
-                    false
-                }
-            })
-            .cloned()
-            .collect();
+        // drop the first range while its start is right after the max
+        while let Some(new_max) = self.ranges.maybe_drop_first(&self.max) {
+            self.max = new_max;
+        }
     }
 
     /// Creates a new instance from the highest contiguous event, and a sequence
@@ -307,10 +292,8 @@ impl AboveRangeSet {
     /// assert!(!above_exset.is_event(6));
     /// ```
     pub fn from<I: IntoIterator<Item = u64>>(max: u64, iter: I) -> Self {
-        AboveRangeSet {
-            max,
-            exs: BTreeSet::from_iter(iter),
-        }
+        let ranges = Ranges::from::<I>(iter);
+        AboveRangeSet { max, ranges }
     }
 }
 
@@ -320,7 +303,7 @@ pub struct EventIter {
     // Last contiguous value that should be returned by the iterator
     max: u64,
     // Iterator of extras
-    exs: std::collections::btree_set::IntoIter<u64>,
+    ranges: RangesIter,
 }
 
 impl Iterator for EventIter {
@@ -330,7 +313,7 @@ impl Iterator for EventIter {
         if self.current == self.max {
             // we've reached the last contiguous, just call next on the extras
             // iterator
-            self.exs.next()
+            self.ranges.next()
         } else {
             // compute next value
             self.current += 1;
@@ -341,10 +324,175 @@ impl Iterator for EventIter {
 
 impl fmt::Debug for AboveRangeSet {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        if self.exs.is_empty() {
+        if self.ranges.is_empty() {
             write!(f, "{}", self.max)
         } else {
-            write!(f, "({} + {:?})", self.max, self.exs)
+            write!(f, "({} + {:?})", self.max, self.ranges)
         }
+    }
+}
+
+impl Ranges {
+    /// Creates a new `Ranges` instance.
+    fn new() -> Self {
+        Ranges {
+            ranges: BTreeMap::new(),
+        }
+    }
+
+    /// Checks if there are no ranges.
+    fn is_empty(&self) -> bool {
+        self.ranges.is_empty()
+    }
+
+    /// Adds a new range, assuming it is new, i.e.:
+    /// - none of the events within the range have already been added.
+    fn add(&mut self, start: u64, mut end: u64) {
+        // split map where the new range should be inserted
+        let mut after_new_range = self.ranges.split_off(&start);
+
+        let mut inserted = false;
+
+        // check if the previous range can be extended with the new range
+        if let Some(mut before) = self.ranges.last_entry() {
+            let before_end = before.get_mut();
+            if *before_end + 1 == start {
+                // extend the previous range
+                *before_end = end;
+
+                // check if we can also extend this range with the first range
+                // in the splitted off ranges
+                if let Some(after) = after_new_range.first_entry() {
+                    if *before_end + 1 == *after.key() {
+                        // remove entry and extend range again
+                        *before_end = after.remove();
+                    }
+                }
+                // we're done, we only need to merge the splitted off ranges
+                inserted = true;
+            }
+        }
+
+        // if here haven't extended the previous range, then we need to create a
+        // new one
+        if !inserted {
+            // check if we should create a new one with the provided `end`, or
+            // with the end of the next range (in case they can be merged)
+            if let Some(after) = after_new_range.first_entry() {
+                if end + 1 == *after.key() {
+                    // remove entry and extend new range to be added
+                    end = after.remove();
+                }
+            }
+
+            // insert new range
+            self.ranges.insert(start, end);
+        }
+
+        // extend map with the ranges that have been splitted off
+        self.ranges.append(&mut after_new_range);
+    }
+
+    /// Checks if the event is part of any of the ranges.
+    fn contains(&self, event: &u64) -> bool {
+        for (start, end) in self.ranges.iter() {
+            if start <= event {
+                if event <= end {
+                    return true;
+                }
+            } else {
+                // if we're in a range that starts after event, then we can give
+                // up since it won't be a part of any other range that comes
+                // after
+                return false;
+            }
+        }
+        return false;
+    }
+
+    /// Joins two ranges. This implementation makes no effort in being
+    /// efficient.
+    fn join(&mut self, other: &Self, max: u64) {
+        let mut result = Ranges::new();
+
+        // add all events from self that are higher than the new max
+        for event in self.clone().event_iter() {
+            if event > max {
+                result.add(event, event);
+            }
+        }
+
+        // add all events from `other` that are higher than the new max
+        // AND haven't been added yet
+        for event in other.clone().event_iter() {
+            if event > max && !result.contains(&event) {
+                result.add(event, event);
+            }
+        }
+
+        self.ranges = result.ranges;
+    }
+
+    /// Creates a iterator for all events represented by the ranges.
+    fn event_iter(self) -> RangesIter {
+        RangesIter {
+            current: None,
+            ranges: self.ranges.into_iter(),
+        }
+    }
+
+    /// Creates a new `Ranges` from a set of events.
+    /// Assumes there are no repeated events.
+    fn from<I: IntoIterator<Item = u64>>(iter: I) -> Self {
+        let mut result = Ranges::new();
+        for event in iter {
+            result.add(event, event);
+        }
+        result
+    }
+
+    /// Drop the first range in case it can be used to update the maximum value.
+    fn maybe_drop_first(&mut self, max: &u64) -> Option<u64> {
+        if let Some(first_entry) = self.ranges.first_entry() {
+            if max + 1 == *first_entry.key() {
+                return Some(first_entry.remove());
+            }
+        }
+        None
+    }
+}
+
+pub struct RangesIter {
+    current: Option<(u64, u64)>,
+    ranges: std::collections::btree_map::IntoIter<u64, u64>,
+}
+
+impl Iterator for RangesIter {
+    type Item = u64;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        // if currently iterating a range, then keep going
+        if let Some((val, end)) = self.current {
+            if val <= end {
+                self.current = Some((val + 1, end));
+                return Some(val);
+            }
+        }
+
+        // if we haven't returned a new value from the current range, try again
+        // in the next range
+        self.current = self.ranges.next();
+        if self.current.is_none() {
+            // if there's no next range, we're done
+            None
+        } else {
+            self.next()
+        }
+    }
+}
+
+impl fmt::Debug for Ranges {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{:?}", self.ranges)
     }
 }

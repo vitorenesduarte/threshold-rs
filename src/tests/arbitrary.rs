@@ -66,6 +66,21 @@ impl Arbitrary for AboveExSet {
     }
 }
 
+impl Arbitrary for AboveRangeSet {
+    fn arbitrary<G: Gen>(g: &mut G) -> AboveRangeSet {
+        let events: Vec<u64> = Arbitrary::arbitrary(g);
+        // reduce the number of possible events
+        let events: Vec<u64> =
+            events.into_iter().filter(|&x| x <= MAX_EVENTS).collect();
+        AboveRangeSet::from_events(events)
+    }
+
+    fn shrink(&self) -> Box<dyn Iterator<Item = AboveRangeSet>> {
+        let vec: Vec<u64> = self.clone().event_iter().collect();
+        Box::new(vec.shrink().map(|v| AboveRangeSet::from_events(v)))
+    }
+}
+
 impl Arbitrary for BelowExSet {
     fn arbitrary<G: Gen>(g: &mut G) -> BelowExSet {
         let events: Vec<u64> = Arbitrary::arbitrary(g);

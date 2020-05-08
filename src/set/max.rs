@@ -81,7 +81,7 @@ impl EventSet for MaxSet {
     /// In the case of `MaxSet` we have that:
     /// - `add_event_range(start, end) == add_event(end)`
     fn add_event_range(&mut self, start: u64, end: u64) -> bool {
-        assert!(start <= end);
+        debug_assert!(start <= end);
         self.add_event(end)
     }
 

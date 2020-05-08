@@ -67,8 +67,8 @@ fn vclock_union(clock_a: VClock<Musk>, clock_b: VClock<Musk>) -> TestResult {
     let (clock, all_equal) = tclock.union();
 
     let result = if clock_a == clock_b {
-        // if the clocks are equal, then the resulting clock should be equal as well and the flag
-        // `all_equal` be true
+        // if the clocks are equal, then the resulting clock should be equal as
+        // well and the flag `all_equal` be true
         clock == clock_a && all_equal
     } else {
         true

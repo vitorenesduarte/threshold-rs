@@ -3,15 +3,6 @@ use crate::*;
 use quickcheck_macros::quickcheck;
 
 #[quickcheck]
-fn next_dot(actor: Musk, beclock: BEClock<Musk>) -> bool {
-    let mut beclock = beclock.clone();
-    let event = beclock.next(&actor);
-
-    // prop: a newly created dot is now part of the clock
-    beclock.contains(&actor, event)
-}
-
-#[quickcheck]
 fn add_dot(actor: Musk, event: u64, beclock: BEClock<Musk>) -> bool {
     let mut beclock = beclock.clone();
     beclock.add(&actor, event);

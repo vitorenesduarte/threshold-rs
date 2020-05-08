@@ -58,6 +58,7 @@ impl EventSet for AboveExSet {
     /// assert_eq!(above_exset.next_event(), 2);
     /// ```
     fn next_event(&mut self) -> u64 {
+        debug_assert!(self.exs.is_empty());
         self.max += 1;
         self.max
     }

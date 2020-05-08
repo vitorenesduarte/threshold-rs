@@ -297,7 +297,7 @@ impl<A: Actor, E: EventSet> Clock<A, E> {
     /// assert_eq!(clock.frontier_threshold(6), None);
     /// ```
     pub fn frontier_threshold(&self, threshold: usize) -> Option<u64> {
-        assert!(threshold > 0);
+        debug_assert!(threshold > 0);
         let clock_size = self.clock.len();
         if threshold <= clock_size {
             // get frontiers and sort them
