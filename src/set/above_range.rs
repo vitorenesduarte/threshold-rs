@@ -347,7 +347,15 @@ impl Ranges {
 
     /// Adds a new range, assuming it is new, i.e.:
     /// - none of the events within the range have already been added.
-    fn add(&mut self, start: u64, mut end: u64) {
+    fn add(&mut self, start: u64, end: u64) {
+        self.ranges.insert(start, end);
+    }
+
+    /// Adds a new range, assuming it is new, i.e.:
+    /// - none of the events within the range have already been added.
+    /// TODO is it worth compressing?
+    #[allow(dead_code)]
+    fn add_and_compress(&mut self, start: u64, mut end: u64) {
         // split map where the new range should be inserted
         let mut after_new_range = self.ranges.split_off(&start);
 
