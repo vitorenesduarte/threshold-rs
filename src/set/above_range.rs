@@ -4,20 +4,20 @@
 //! ```
 //! use threshold::*;
 //!
-//! let mut above_exset = AboveRangeSet::new();
-//! assert_eq!(above_exset.next_event(), 1);
-//! assert!(above_exset.is_event(1));
-//! assert!(!above_exset.is_event(2));
+//! let mut above_range_set = AboveRangeSet::new();
+//! assert_eq!(above_range_set.next_event(), 1);
+//! assert!(above_range_set.is_event(1));
+//! assert!(!above_range_set.is_event(2));
 //!
 //! let other = AboveRangeSet::from_event(3);
 //! assert!(!other.is_event(1));
 //! assert!(!other.is_event(2));
 //! assert!(other.is_event(3));
 //!
-//! above_exset.join(&other);
-//! assert!(above_exset.is_event(1));
-//! assert!(!above_exset.is_event(2));
-//! assert!(above_exset.is_event(3));
+//! above_range_set.join(&other);
+//! assert!(above_range_set.is_event(1));
+//! assert!(!above_range_set.is_event(2));
+//! assert!(above_range_set.is_event(3));
 //! ```
 
 use crate::EventSet;
@@ -52,15 +52,15 @@ impl EventSet for AboveRangeSet {
     }
 
     /// Generates the next event.
-    /// There should be no extras when calling this.
+    /// There should be no extra ranges when calling this.
     ///
     /// # Examples
     /// ```
     /// use threshold::*;
     ///
-    /// let mut above_exset = AboveRangeSet::new();
-    /// assert_eq!(above_exset.next_event(), 1);
-    /// assert_eq!(above_exset.next_event(), 2);
+    /// let mut above_range_set = AboveRangeSet::new();
+    /// assert_eq!(above_range_set.next_event(), 1);
+    /// assert_eq!(above_range_set.next_event(), 2);
     /// ```
     fn next_event(&mut self) -> u64 {
         debug_assert!(self.ranges.is_empty());
@@ -75,21 +75,21 @@ impl EventSet for AboveRangeSet {
     /// ```
     /// use threshold::*;
     ///
-    /// let mut above_exset = AboveRangeSet::new();
+    /// let mut above_range_set = AboveRangeSet::new();
     ///
-    /// above_exset.add_event(1);
-    /// assert!(above_exset.is_event(1));
-    /// assert!(!above_exset.is_event(2));
+    /// above_range_set.add_event(1);
+    /// assert!(above_range_set.is_event(1));
+    /// assert!(!above_range_set.is_event(2));
     ///
-    /// above_exset.add_event(3);
-    /// assert!(above_exset.is_event(1));
-    /// assert!(!above_exset.is_event(2));
-    /// assert!(above_exset.is_event(3));
+    /// above_range_set.add_event(3);
+    /// assert!(above_range_set.is_event(1));
+    /// assert!(!above_range_set.is_event(2));
+    /// assert!(above_range_set.is_event(3));
     ///
-    /// above_exset.add_event(2);
-    /// assert!(above_exset.is_event(1));
-    /// assert!(above_exset.is_event(2));
-    /// assert!(above_exset.is_event(3));
+    /// above_range_set.add_event(2);
+    /// assert!(above_range_set.is_event(1));
+    /// assert!(above_range_set.is_event(2));
+    /// assert!(above_range_set.is_event(3));
     /// ```
     fn add_event(&mut self, event: u64) -> bool {
         if event == self.max + 1 {
@@ -138,13 +138,13 @@ impl EventSet for AboveRangeSet {
     /// ```
     /// use threshold::*;
     ///
-    /// let mut above_exset = AboveRangeSet::new();
-    /// let event = above_exset.next_event();
-    /// assert!(above_exset.is_event(event));
+    /// let mut above_range_set = AboveRangeSet::new();
+    /// let event = above_range_set.next_event();
+    /// assert!(above_range_set.is_event(event));
     ///
-    /// above_exset.add_event(3);
-    /// assert!(!above_exset.is_event(2));
-    /// assert!(above_exset.is_event(3));
+    /// above_range_set.add_event(3);
+    /// assert!(!above_range_set.is_event(2));
+    /// assert!(above_range_set.is_event(3));
     /// ```
     fn is_event(&self, event: u64) -> bool {
         event <= self.max || self.ranges.contains(&event)
@@ -158,22 +158,22 @@ impl EventSet for AboveRangeSet {
     /// ```
     /// use threshold::*;
     ///
-    /// let mut above_exset = AboveRangeSet::new();
+    /// let mut above_range_set = AboveRangeSet::new();
     ///
-    /// above_exset.add_event(1);
-    /// assert_eq!(above_exset.events(), (1, vec![]));
+    /// above_range_set.add_event(1);
+    /// assert_eq!(above_range_set.events(), (1, vec![]));
     ///
-    /// above_exset.add_event(3);
-    /// assert_eq!(above_exset.events(), (1, vec![3]));
+    /// above_range_set.add_event(3);
+    /// assert_eq!(above_range_set.events(), (1, vec![3]));
     ///
-    /// above_exset.add_event(2);
-    /// assert_eq!(above_exset.events(), (3, vec![]));
+    /// above_range_set.add_event(2);
+    /// assert_eq!(above_range_set.events(), (3, vec![]));
     ///
-    /// above_exset.add_event(4);
-    /// assert_eq!(above_exset.events(), (4, vec![]));
+    /// above_range_set.add_event(4);
+    /// assert_eq!(above_range_set.events(), (4, vec![]));
     ///
-    /// above_exset.add_event(6);
-    /// assert_eq!(above_exset.events(), (4, vec![6]));
+    /// above_range_set.add_event(6);
+    /// assert_eq!(above_range_set.events(), (4, vec![6]));
     /// ```
     fn events(&self) -> (u64, Vec<u64>) {
         (self.max, self.ranges.clone().event_iter().collect())
@@ -185,23 +185,23 @@ impl EventSet for AboveRangeSet {
     /// ```
     /// use threshold::*;
     ///
-    /// let mut above_exset = AboveRangeSet::new();
-    /// assert_eq!(above_exset.frontier(), 0);
+    /// let mut above_range_set = AboveRangeSet::new();
+    /// assert_eq!(above_range_set.frontier(), 0);
     ///
-    /// above_exset.add_event(1);
-    /// assert_eq!(above_exset.frontier(), 1);
+    /// above_range_set.add_event(1);
+    /// assert_eq!(above_range_set.frontier(), 1);
     ///
-    /// above_exset.add_event(3);
-    /// assert_eq!(above_exset.frontier(), 1);
+    /// above_range_set.add_event(3);
+    /// assert_eq!(above_range_set.frontier(), 1);
     ///
-    /// above_exset.add_event(2);
-    /// assert_eq!(above_exset.frontier(), 3);
+    /// above_range_set.add_event(2);
+    /// assert_eq!(above_range_set.frontier(), 3);
     ///
-    /// above_exset.add_event(4);
-    /// assert_eq!(above_exset.frontier(), 4);
+    /// above_range_set.add_event(4);
+    /// assert_eq!(above_range_set.frontier(), 4);
     ///
-    /// above_exset.add_event(6);
-    /// assert_eq!(above_exset.frontier(), 4);
+    /// above_range_set.add_event(6);
+    /// assert_eq!(above_range_set.frontier(), 4);
     /// ```
     fn frontier(&self) -> u64 {
         self.max
@@ -213,23 +213,23 @@ impl EventSet for AboveRangeSet {
     /// ```
     /// use threshold::*;
     ///
-    /// let mut above_exset = AboveRangeSet::new();
-    /// above_exset.add_event(1);
-    /// above_exset.add_event(3);
-    /// above_exset.add_event(4);
-    /// assert_eq!(above_exset.events(), (1, vec![3, 4]));
+    /// let mut above_range_set = AboveRangeSet::new();
+    /// above_range_set.add_event(1);
+    /// above_range_set.add_event(3);
+    /// above_range_set.add_event(4);
+    /// assert_eq!(above_range_set.events(), (1, vec![3, 4]));
     ///
-    /// above_exset.join(&AboveRangeSet::from_event(3));
-    /// assert_eq!(above_exset.events(), (1, vec![3, 4]));
+    /// above_range_set.join(&AboveRangeSet::from_event(3));
+    /// assert_eq!(above_range_set.events(), (1, vec![3, 4]));
     ///
-    /// above_exset.join(&AboveRangeSet::from_event(5));
-    /// assert_eq!(above_exset.events(), (1, vec![3, 4, 5]));
+    /// above_range_set.join(&AboveRangeSet::from_event(5));
+    /// assert_eq!(above_range_set.events(), (1, vec![3, 4, 5]));
     ///
     /// let mut other = AboveRangeSet::new();
     /// other.add_event(2);
     /// other.add_event(7);
-    /// above_exset.join(&other);
-    /// assert_eq!(above_exset.events(), (5, vec![7]));
+    /// above_range_set.join(&other);
+    /// assert_eq!(above_range_set.events(), (5, vec![7]));
     /// ```
     fn join(&mut self, other: &Self) {
         // the new max value is the max of both max values
@@ -249,11 +249,11 @@ impl EventSet for AboveRangeSet {
     /// ```
     /// use threshold::*;
     ///
-    /// let mut above_exset = AboveRangeSet::new();
-    /// above_exset.add_event(3);
-    /// above_exset.add_event(5);
+    /// let mut above_range_set = AboveRangeSet::new();
+    /// above_range_set.add_event(3);
+    /// above_range_set.add_event(5);
     ///
-    /// let mut iter = above_exset.event_iter();
+    /// let mut iter = above_range_set.event_iter();
     /// assert_eq!(iter.next(), Some(3));
     /// assert_eq!(iter.next(), Some(5));
     /// assert_eq!(iter.next(), None);
@@ -283,13 +283,13 @@ impl AboveRangeSet {
     /// ```
     /// use threshold::*;
     ///
-    /// let above_exset = AboveRangeSet::from(0, vec![2, 4, 5]);
-    /// assert!(!above_exset.is_event(1));
-    /// assert!(above_exset.is_event(2));
-    /// assert!(!above_exset.is_event(3));
-    /// assert!(above_exset.is_event(4));
-    /// assert!(above_exset.is_event(5));
-    /// assert!(!above_exset.is_event(6));
+    /// let above_range_set = AboveRangeSet::from(0, vec![2, 4, 5]);
+    /// assert!(!above_range_set.is_event(1));
+    /// assert!(above_range_set.is_event(2));
+    /// assert!(!above_range_set.is_event(3));
+    /// assert!(above_range_set.is_event(4));
+    /// assert!(above_range_set.is_event(5));
+    /// assert!(!above_range_set.is_event(6));
     /// ```
     pub fn from<I: IntoIterator<Item = u64>>(max: u64, iter: I) -> Self {
         let ranges = Ranges::from::<I>(iter);
@@ -302,7 +302,7 @@ pub struct EventIter {
     current: u64,
     // Last contiguous value that should be returned by the iterator
     max: u64,
-    // Iterator of extras
+    // Iterator of extra ranges
     ranges: RangesIter,
 }
 
@@ -311,8 +311,8 @@ impl Iterator for EventIter {
 
     fn next(&mut self) -> Option<Self::Item> {
         if self.current == self.max {
-            // we've reached the last contiguous, just call next on the extras
-            // iterator
+            // we've reached the last contiguous, just call next on the extra
+            // ranges iterator
             self.ranges.next()
         } else {
             // compute next value
