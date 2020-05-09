@@ -6,9 +6,6 @@ rust:
 matrix:
   fast_finish: true
 
-notifications:
-  email: false
-
 cache:
   cargo: true
   apt: true
