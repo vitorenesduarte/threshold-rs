@@ -34,7 +34,7 @@ addons:
       # </travis>
 
 before_script: |
-  if [[ "$TRAVIS_RUST_VERSION" == "stable" ]]; then
+  if [[ "$TRAVIS_RUST_VERSION" == "nightly" ]]; then
     export PATH=$HOME/.cargo/bin:$PATH
 
     # <tarpaulin>
@@ -49,11 +49,10 @@ before_script: |
 
 script:
   - cargo build
-  - cargo test
+  - QUICKCHECK_TESTS=10000 cargo test 
 
 after_success: |
-  cargo coveralls
-  # if [ "$TRAVIS_RUST_VERSION" == "stable" ]; then
+  if [ "$TRAVIS_RUST_VERSION" == "nightly" ]; then
     # measure code coverage and upload to coveralls.io
 
     # <tarpaulin>
@@ -61,10 +60,10 @@ after_success: |
     # </tarpaulin>
 
     # <travis>
-    # cargo coveralls
+    cargo coveralls
     # </travis>
 
-  # fi
+  fi
 
 notifications:
   email: false
