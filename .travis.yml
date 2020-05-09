@@ -52,7 +52,8 @@ script:
   - cargo test
 
 after_success: |
-  if [ "$TRAVIS_RUST_VERSION" == "stable" ]; then
+  cargo coveralls
+  # if [ "$TRAVIS_RUST_VERSION" == "stable" ]; then
     # measure code coverage and upload to coveralls.io
 
     # <tarpaulin>
@@ -60,10 +61,10 @@ after_success: |
     # </tarpaulin>
 
     # <travis>
-    cargo coveralls
+    # cargo coveralls
     # </travis>
 
-  fi
+  # fi
 
 notifications:
   email: false
