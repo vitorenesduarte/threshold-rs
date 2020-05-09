@@ -20,7 +20,6 @@ then
 fi
 
 grcov . \
-    --branch \
     ${token} \
     ${service_pull_request} \
     --service-number "${TRAVIS_BUILD_ID}" \
