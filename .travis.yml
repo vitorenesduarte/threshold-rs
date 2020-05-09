@@ -4,8 +4,9 @@ rust:
   - nightly
 
 matrix:
-  allow_failures:
-    - rust: nightly
+  include:
+    - os: linux
+      rust: nightly
   fast_finish: true
 
 notifications:
@@ -15,51 +16,17 @@ cache:
   cargo: true
   apt: true
 
-addons:
-  apt:
-    packages:
-      # <tarpaulin>
-      # - libssl-dev
-      # </tarpaulin>
-
-      # <travis>
-      - libcurl4-openssl-dev
-      - libelf-dev
-      - libdw-dev
-      - binutils-dev
-      - libiberty-dev
-      - cmake
-    sources:
-      - kalakris-cmake
-      # </travis>
-
-before_script: |
-  export PATH=$HOME/.cargo/bin:$PATH
-
-  # <tarpaulin>
-  # cargo install cargo-tarpaulin || echo "cargo-tarpaulin already installed"
-  # </tarpaulin>
-
-  # <travis>
-  cargo install cargo-update || echo "cargo-update already installed"
-  cargo install cargo-travis || echo "cargo-travis already installed"
-  cargo install-update -a # update outdated cached binaries
-  # </travis>
+before_install:
+  - curl -L https://github.com/mozilla/grcov/releases/latest/download/grcov-linux-x86_64.tar.bz2 | tar jxf -
 
 script:
+  - export CARGO_INCREMENTAL=0
+  - export RUSTFLAGS="-Zprofile -Ccodegen-units=1 -Copt-level=0 -Clink-dead-code -Coverflow-checks=off -Zpanic_abort_tests -Cpanic=abort"
+  - export RUSTDOCFLAGS="-Cpanic=abort"
   - cargo build
   - QUICKCHECK_TESTS=10000 cargo test 
-
-after_success: |
   # measure code coverage and upload to coveralls.io
-
-  # <tarpaulin>
-  # cargo tarpaulin --ciserver travis-ci --coveralls $TRAVIS_JOB_ID
-  # </tarpaulin>
-
-  # <travis>
-  cargo coveralls
-  # </travis>
+  - grcov ./target/debug -t coveralls --llvm --branch --ignore-not-existing --service-name travis-ci --service-job-id $TRAVIS_JOB_ID -s . > coveralls.json
 
 notifications:
   email: false
