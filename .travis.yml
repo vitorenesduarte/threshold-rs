@@ -4,9 +4,6 @@ rust:
   - nightly
 
 matrix:
-  include:
-    - os: linux
-      rust: nightly
   fast_finish: true
 
 notifications:
@@ -17,16 +14,18 @@ cache:
   apt: true
 
 before_install:
-  - curl -L https://github.com/mozilla/grcov/releases/latest/download/grcov-linux-x86_64.tar.bz2 | tar jxf -
+  - cargo install grcov
 
 script:
   - export CARGO_INCREMENTAL=0
   - export RUSTFLAGS="-Zprofile -Ccodegen-units=1 -Copt-level=0 -Clink-dead-code -Coverflow-checks=off -Zpanic_abort_tests -Cpanic=abort"
   - export RUSTDOCFLAGS="-Cpanic=abort"
   - cargo build
-  - QUICKCHECK_TESTS=10000 cargo test 
+  - cargo test 
+
+after_success:
   # measure code coverage and upload to coveralls.io
-  - grcov ./target/debug -t coveralls --llvm --branch --ignore-not-existing --service-name travis-ci --service-job-id $TRAVIS_JOB_ID -s . > coveralls.json
+  - ./submit-to-coveralls.sh
 
 notifications:
   email: false
