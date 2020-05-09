@@ -18,11 +18,11 @@ script:
   - export RUSTFLAGS="-Zprofile -Ccodegen-units=1 -Copt-level=0 -Clink-dead-code -Coverflow-checks=off -Zpanic_abort_tests -Cpanic=abort"
   - export RUSTDOCFLAGS="-Cpanic=abort"
   - cargo build
-  - cargo test 
+  - cargo test
 
 after_success:
   # measure code coverage and upload to coveralls.io
-  - ./submit-to-coveralls.sh
+  - ./coveralls.sh
 
 notifications:
   email: false

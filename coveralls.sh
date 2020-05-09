@@ -20,6 +20,7 @@ then
 fi
 
 grcov . \
+    --branch \
     ${token} \
     ${service_pull_request} \
     --service-number "${TRAVIS_BUILD_ID}" \
@@ -36,4 +37,3 @@ curl \
     --form "json_file=@coveralls.json" \
     --include \
     https://coveralls.io/api/v1/jobs
-
