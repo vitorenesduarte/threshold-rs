@@ -132,17 +132,16 @@ impl<A: Actor> TClock<A, MaxSet> {
             let seq = tset
                 .iter()
                 .rev()
-                .skip_while(|(_, &(positives, _))| {
+                .find(|(_, &(positives, _))| {
                     // `total_pos` records the implicit number of observations:
                     // since we are iterating from the highest event to the
                     // lowest, and the observation of event X counts as an
                     // observation of event Y when X > Y, we can simply
                     // accumulate all observations in `total_pos` and stop the
-                    // `skip_while` once `total_pos` passes the threshold
+                    // once `total_pos` reaches the threshold
                     total_positives += positives;
-                    total_positives < threshold
+                    total_positives >= threshold
                 })
-                .next()
                 // if there is an event that passes the threshold, return it
                 // otherwise, return `0`
                 .map_or(0, |(&seq, _)| seq);
