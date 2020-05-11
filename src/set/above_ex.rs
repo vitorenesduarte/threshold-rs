@@ -23,6 +23,7 @@
 use crate::EventSet;
 use serde::{Deserialize, Serialize};
 use std::cmp;
+use std::cmp::Ordering;
 use std::collections::BTreeSet;
 use std::fmt;
 use std::iter::FromIterator;
@@ -87,23 +88,28 @@ impl EventSet for AboveExSet {
     /// assert!(above_exset.is_event(3));
     /// ```
     fn add_event(&mut self, event: u64) -> bool {
-        if event == self.max + 1 {
-            // this event is now the new max
-            self.max = event;
+        let next_max = self.max + 1;
+        match event.cmp(&next_max) {
+            Ordering::Equal => {
+                // this event is now the new max
+                self.max = event;
 
-            // maybe compress
-            self.try_compress();
+                // maybe compress
+                self.try_compress();
 
-            // new event, so `true`
-            true
-        } else if event > self.max + 1 {
-            // add as an extra. the result is the same as the result of the
-            // insert in the extras:
-            // - if it's a new extra, then it's also a new event
-            self.exs.insert(event)
-        } else {
-            // else it's already an event
-            false
+                // new event, so `true`
+                true
+            }
+            Ordering::Greater => {
+                // add as an extra. the result is the same as the result of the
+                // insert in the extras:
+                // - if it's a new extra, then it's also a new event
+                self.exs.insert(event)
+            }
+            Ordering::Less => {
+                // else it's already an event
+                false
+            }
         }
     }
 

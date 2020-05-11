@@ -23,6 +23,7 @@
 use crate::EventSet;
 use serde::{Deserialize, Serialize};
 use std::cmp;
+use std::cmp::Ordering;
 use std::collections::BTreeMap;
 use std::fmt;
 
@@ -92,22 +93,27 @@ impl EventSet for AboveRangeSet {
     /// assert!(above_range_set.is_event(3));
     /// ```
     fn add_event(&mut self, event: u64) -> bool {
-        if event == self.max + 1 {
-            // this event is now the new max
-            self.max = event;
+        let next_max = self.max + 1;
+        match event.cmp(&next_max) {
+            Ordering::Equal => {
+                // this event is now the new max
+                self.max = event;
 
-            // maybe compress
-            self.try_compress();
+                // maybe compress
+                self.try_compress();
 
-            // new event, so `true`
-            true
-        } else if event > self.max + 1 {
-            // add as a range: assumes it's a new range
-            self.ranges.add(event, event);
-            true
-        } else {
-            // else it's already an event
-            false
+                // new event, so `true`
+                true
+            }
+            Ordering::Greater => {
+                // add as a range: assumes it's a new range
+                self.ranges.add(event, event);
+                true
+            }
+            Ordering::Less => {
+                // else it's already an event
+                false
+            }
         }
     }
 
@@ -415,7 +421,7 @@ impl Ranges {
                 return false;
             }
         }
-        return false;
+        false
     }
 
     /// Joins two ranges. This implementation makes no effort in being
