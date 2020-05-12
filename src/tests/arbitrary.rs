@@ -104,6 +104,7 @@ impl<A: Actor + Arbitrary, E: EventSet + Arbitrary> Arbitrary for Clock<A, E> {
 
     fn shrink(&self) -> Box<dyn Iterator<Item = Clock<A, E>>> {
         Box::new(std::iter::empty())
+        // TODO the following implementation leads to a stack overflow
         // create a vector with all events in the clock
         // let vec: Vec<(A, u64)> = self
         //     .clone()
@@ -113,7 +114,6 @@ impl<A: Actor + Arbitrary, E: EventSet + Arbitrary> Arbitrary for Clock<A, E> {
         //         eset.event_iter().map(move |event| (actor.clone(), event))
         //     })
         //     .collect();
-
         // Box::new(vec.shrink().map(|v| {
         //     let mut clock = Clock::new();
         //     for (actor, event) in v {
