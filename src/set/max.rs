@@ -159,7 +159,23 @@ impl EventSet for MaxSet {
     /// assert!(maxset.is_event(20));
     /// ```
     fn join(&mut self, other: &Self) {
-        self.add_event(other.max);
+        self.max = std::cmp::max(self.max, other.max);
+    }
+
+    /// Intersects `other` `MaxSet` with `self`.
+    ///
+    /// # Examples
+    /// ```
+    /// use threshold::*;
+    ///
+    /// let mut maxset = MaxSet::from_event(20);
+    /// assert!(maxset.is_event(20));
+    ///
+    /// maxset.meet(&MaxSet::from_event(10));
+    /// assert!(!maxset.is_event(20));
+    /// ```
+    fn meet(&mut self, other: &Self) {
+        self.max = std::cmp::min(self.max, other.max);
     }
 
     /// Returns a `MaxSet` event iterator with all events from lowest to
@@ -183,6 +199,13 @@ impl EventSet for MaxSet {
             current: 0,
             max: self.max,
         }
+    }
+}
+
+impl MaxSet {
+    /// Creates a `MaxSet` from the highest event.
+    pub fn from(max: u64) -> Self {
+        Self { max }
     }
 }
 

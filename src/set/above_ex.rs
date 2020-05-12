@@ -246,6 +246,10 @@ impl EventSet for AboveExSet {
         self.try_compress();
     }
 
+    fn meet(&mut self, _other: &Self) {
+        todo!("AboveExSet::meet not yet implemented")
+    }
+
     /// Returns a `AboveExSet` event iterator with all events from lowest to
     /// highest.
     ///

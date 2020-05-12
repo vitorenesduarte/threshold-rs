@@ -247,6 +247,10 @@ impl EventSet for BelowExSet {
         self.max = cmp::max(self.max, other.max);
     }
 
+    fn meet(&mut self, _other: &Self) {
+        todo!("BelowExSet::meet not yet implemented")
+    }
+
     /// Returns a `BelowExSet` event iterator with all events from lowest to
     /// highest.
     ///
