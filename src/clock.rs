@@ -59,7 +59,7 @@ impl<A: Actor, E: EventSet> Clock<A, E> {
     /// let vclock = VClock::with(actors);
     /// assert_eq!(
     ///     vclock.frontier(),
-    ///     HashMap::from_iter(vec![(&"A", 0), (&"B", 0)]),
+    ///     VClock::from(vec![("A", MaxSet::from(0)), ("B", MaxSet::from(0))])
     /// );
     /// ```
     pub fn with<I: IntoIterator<Item = A>>(iter: I) -> Self {
@@ -180,9 +180,9 @@ impl<A: Actor, E: EventSet> Clock<A, E> {
     /// let max_set = clock.get(&actor_a).expect("there should an event set");
     /// let mut iter = max_set.clone().event_iter();
     ///
-    /// assert!(iter.next(), Some(1));
-    /// assert!(iter.next(), Some(2));
-    /// assert!(iter.next(), None);
+    /// assert_eq!(iter.next(), Some(1));
+    /// assert_eq!(iter.next(), Some(2));
+    /// assert_eq!(iter.next(), None);
     /// ```
     pub fn get(&self, actor: &A) -> Option<&E> {
         self.clock.get(actor)
@@ -278,7 +278,7 @@ impl<A: Actor, E: EventSet> Clock<A, E> {
     ///
     /// assert_eq!(
     ///     clock.frontier(),
-    ///     HashMap::from_iter(vec![(&"A", 2), (&"B", 3)])
+    ///     VClock::from(vec![("A", MaxSet::from(2)), ("B", MaxSet::from(3))])
     /// );
     /// ```
     pub fn frontier(&self) -> VClock<A> {
