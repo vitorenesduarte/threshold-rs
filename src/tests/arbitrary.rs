@@ -103,8 +103,24 @@ impl<A: Actor + Arbitrary, E: EventSet + Arbitrary> Arbitrary for Clock<A, E> {
     }
 
     fn shrink(&self) -> Box<dyn Iterator<Item = Clock<A, E>>> {
-        let vec: Vec<(A, E)> = self.clone().into_iter().collect();
-        Box::new(vec.shrink().map(|v| Clock::from(v)))
+        Box::new(std::iter::empty())
+        // create a vector with all events in the clock
+        // let vec: Vec<(A, u64)> = self
+        //     .clone()
+        //     .into_iter()
+        //     .flat_map(|(actor, eset)| {
+        //         // TODO why is the move needed?
+        //         eset.event_iter().map(move |event| (actor.clone(), event))
+        //     })
+        //     .collect();
+
+        // Box::new(vec.shrink().map(|v| {
+        //     let mut clock = Clock::new();
+        //     for (actor, event) in v {
+        //         clock.add(&actor, event);
+        //     }
+        //     clock
+        // }))
     }
 }
 

@@ -12,8 +12,7 @@ fn add_dot(actor: Musk, event: u64, arclock: ARClock<Musk>) -> bool {
 }
 
 #[quickcheck]
-fn join(arclock_a: ARClock<Musk>, aeclock_b: ARClock<Musk>) -> bool {
-    let mut arclock_a = arclock_a.clone();
+fn join(mut arclock_a: ARClock<Musk>, aeclock_b: ARClock<Musk>) -> bool {
     arclock_a.join(&aeclock_b);
 
     // prop: after merging b into a, all events in b are events in a

@@ -113,6 +113,9 @@ pub trait EventSet: Clone + Debug + Default {
     /// Merges `other` `EventSet` into `self`.
     fn join(&mut self, other: &Self);
 
+    /// Intersects `other` `EventSet` with `self`.
+    fn meet(&mut self, other: &Self);
+
     /// Returns an iterator containing all elements represented by this event
     /// set.
     fn event_iter(self) -> Self::EventIter;

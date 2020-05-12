@@ -20,6 +20,7 @@
 use crate::*;
 use serde::{Deserialize, Serialize};
 use std::collections::hash_map::{self, HashMap};
+use std::collections::HashSet;
 use std::iter::FromIterator;
 
 // A Vector Clock is `Clock` with `MaxSet` as `EventSet`.
@@ -163,6 +164,30 @@ impl<A: Actor, E: EventSet> Clock<A, E> {
         }
     }
 
+    /// Retrieves the event set associated with some `actor`.
+    ///
+    /// # Examples
+    /// ```
+    /// use threshold::*;
+    ///
+    /// let actor_a = "A";
+    ///
+    /// let mut clock = VClock::new();
+    /// assert_eq!(clock.get(&actor_a), None);
+    ///
+    /// clock.add(&actor_a, 1);
+    /// clock.add(&actor_a, 2);
+    /// let max_set = clock.get(&actor_a).expect("there should an event set");
+    /// let mut iter = max_set.clone().event_iter();
+    ///
+    /// assert!(iter.next(), Some(1));
+    /// assert!(iter.next(), Some(2));
+    /// assert!(iter.next(), None);
+    /// ```
+    pub fn get(&self, actor: &A) -> Option<&E> {
+        self.clock.get(actor)
+    }
+
     /// Adds an event to the clock.
     /// If the clock did not have this event present, `true` is returned.
     /// If the clock did have this event present, `false` is returned.
@@ -256,11 +281,11 @@ impl<A: Actor, E: EventSet> Clock<A, E> {
     ///     HashMap::from_iter(vec![(&"A", 2), (&"B", 3)])
     /// );
     /// ```
-    pub fn frontier(&self) -> HashMap<&A, u64> {
-        self.clock
-            .iter()
-            .map(|(actor, eset)| (actor, eset.frontier()))
-            .collect()
+    pub fn frontier(&self) -> VClock<A> {
+        let frontier = self.clock.iter().map(|(actor, eset)| {
+            (actor.clone(), MaxSet::from(eset.frontier()))
+        });
+        VClock::from(frontier)
     }
 
     /// By looking at this `Clock`'s frontier, it computes the event that's been
@@ -312,7 +337,7 @@ impl<A: Actor, E: EventSet> Clock<A, E> {
         }
     }
 
-    /// Merges vector clock `other` passed as argument into `self`.
+    /// Merges clock `other` passed as argument into `self`.
     /// After merge, all events in `other` are events in `self`.
     ///
     /// # Examples
@@ -336,6 +361,47 @@ impl<A: Actor, E: EventSet> Clock<A, E> {
                 |current_eset| current_eset.join(eset),
                 || (eset.clone(), ()),
             );
+        }
+    }
+
+    /// Intersects clock `other` passed as argument with `self`.
+    /// After intersection, only the common events are in `self`.
+    ///
+    /// # Examples
+    /// ```
+    /// use threshold::*;
+    ///
+    /// let actor_a = "A";
+    /// let mut clock_a = VClock::new();
+    /// let mut clock_b = VClock::new();
+    ///
+    /// let event = clock_a.next(&actor_a);
+    ///
+    /// clock_b.meet(&clock_a);
+    /// assert!(!clock_b.contains(&actor_a, event));
+    ///
+    /// clock_b.next(&actor_a);
+    /// clock_b.meet(&clock_a);
+    /// assert!(clock_b.contains(&actor_a, event));
+    /// ```
+    pub fn meet(&mut self, other: &Self) {
+        // TODO can we remove .cloned()?
+        let mut only_local: HashSet<A> =
+            HashSet::from_iter(self.clock.keys().cloned());
+        for (actor, eset) in other.clock.iter() {
+            self.upsert(
+                actor,
+                |current_eset| current_eset.meet(eset),
+                || (E::new(), ()),
+            );
+            only_local.remove(actor);
+        }
+
+        // at this point, `only_local` contains the set of actors that are only
+        // present in the local clock
+        // - these actors shouldn't be in the final clock, so let's remove them
+        for actor in only_local {
+            self.clock.remove(&actor);
         }
     }
 

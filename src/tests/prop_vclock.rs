@@ -21,12 +21,32 @@ fn add_dot(actor: Musk, event: u64, vclock: VClock<Musk>) -> bool {
 }
 
 #[quickcheck]
-fn join(vclock_a: VClock<Musk>, vclock_b: VClock<Musk>) -> bool {
-    let mut vclock_a = vclock_a.clone();
+fn join(mut vclock_a: VClock<Musk>, vclock_b: VClock<Musk>) -> bool {
     vclock_a.join(&vclock_b);
 
     // prop: after merging b into a, all events in b are events in a
     vclock_b.into_iter().all(|(actor, eset)| {
         eset.event_iter().all(|seq| vclock_a.contains(&actor, seq))
+    })
+}
+
+#[quickcheck]
+fn meet(vclock_a: VClock<Musk>, vclock_b: VClock<Musk>) -> bool {
+    let mut result = vclock_a.clone();
+    result.meet(&vclock_b);
+
+    vclock_a.into_iter().all(|(actor, eset_a)| {
+        let a = eset_a.frontier();
+        let b = vclock_b
+            .get(&actor)
+            .map(|eset_b| eset_b.frontier())
+            .unwrap_or(0);
+        let min = std::cmp::min(a, b);
+        // prop: it contains the min but no more than that
+        if min > 0 {
+            result.contains(&actor, min) && !result.contains(&actor, min + 1)
+        } else {
+            true
+        }
     })
 }
