@@ -24,7 +24,8 @@ use crate::EventSet;
 use serde::{Deserialize, Serialize};
 use std::cmp;
 use std::cmp::Ordering;
-use std::collections::BTreeSet;
+use std::collections::btree_set::{self, BTreeSet};
+use std::collections::HashSet;
 use std::fmt;
 use std::iter::FromIterator;
 
@@ -33,7 +34,7 @@ pub struct AboveExSet {
     // Highest contiguous event seen
     max: u64,
     // Set of extra events above the highest (sorted ASC)
-    exs: BTreeSet<u64>,
+    exs: HashSet<u64>,
 }
 
 impl EventSet for AboveExSet {
@@ -43,7 +44,7 @@ impl EventSet for AboveExSet {
     fn new() -> Self {
         AboveExSet {
             max: 0,
-            exs: BTreeSet::new(),
+            exs: HashSet::new(),
         }
     }
 
@@ -178,7 +179,9 @@ impl EventSet for AboveExSet {
     /// assert_eq!(above_exset.events(), (4, vec![6]));
     /// ```
     fn events(&self) -> (u64, Vec<u64>) {
-        (self.max, self.exs.clone().into_iter().collect())
+        let mut exs: Vec<_> = self.exs.clone().into_iter().collect();
+        exs.sort_unstable();
+        (self.max, exs)
     }
 
     /// Returns the frontier (the highest contiguous event seen).
@@ -270,7 +273,7 @@ impl EventSet for AboveExSet {
         EventIter {
             current: 0,
             max: self.max,
-            exs: self.exs.into_iter(),
+            exs: BTreeSet::from_iter(self.exs).into_iter(),
         }
     }
 }
@@ -278,28 +281,10 @@ impl EventSet for AboveExSet {
 impl AboveExSet {
     /// Tries to set a new max contiguous event.
     fn try_compress(&mut self) {
-        // bind the borrow to a new variable, as suggested here:
-        // - https://github.com/rust-lang/rust/issues/19004#issuecomment-63220141
-        let max = &mut self.max;
-
         // only keep in extras those that can't be compressed
-        self.exs = self
-            .exs
-            .iter()
-            .skip_while(|&&extra| {
-                if extra == *max + 1 {
-                    // we have a new max
-                    *max = extra;
-
-                    // don't keep it in extras
-                    true
-                } else {
-                    // keep it in extras
-                    false
-                }
-            })
-            .cloned()
-            .collect();
+        while self.exs.remove(&(self.max + 1)) {
+            self.max = self.max + 1;
+        }
     }
 
     /// Creates a new instance from the highest contiguous event, and a sequence
@@ -320,7 +305,7 @@ impl AboveExSet {
     pub fn from<I: IntoIterator<Item = u64>>(max: u64, iter: I) -> Self {
         AboveExSet {
             max,
-            exs: BTreeSet::from_iter(iter),
+            exs: HashSet::from_iter(iter),
         }
     }
 }
@@ -331,7 +316,7 @@ pub struct EventIter {
     // Last contiguous value that should be returned by the iterator
     max: u64,
     // Iterator of extras
-    exs: std::collections::btree_set::IntoIter<u64>,
+    exs: btree_set::IntoIter<u64>,
 }
 
 impl Iterator for EventIter {
