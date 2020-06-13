@@ -385,22 +385,19 @@ impl<A: Actor, E: EventSet> Clock<A, E> {
     /// assert!(clock_b.contains(&actor_a, event));
     /// ```
     pub fn meet(&mut self, other: &Self) {
-        // TODO can we remove .cloned()?
-        let mut only_local: HashSet<A> =
-            HashSet::from_iter(self.clock.keys().cloned());
-        for (actor, eset) in other.clock.iter() {
-            self.upsert(
-                actor,
-                |current_eset| current_eset.meet(eset),
-                || (E::new(), ()),
-            );
-            only_local.remove(actor);
+        let mut to_remove = Vec::new();
+        for (actor, eset) in self.clock.iter_mut() {
+            if let Some(other_eset) = other.get(actor) {
+                eset.meet(other_eset);
+            } else {
+                to_remove.push(actor.clone());
+            }
         }
 
-        // at this point, `only_local` contains the set of actors that are only
-        // present in the local clock
+        // at this point, `to_remove` contains the set of actors are present in
+        // the local clock but not in the remote clock
         // - these actors shouldn't be in the final clock, so let's remove them
-        for actor in only_local {
+        for actor in to_remove {
             self.clock.remove(&actor);
         }
     }
