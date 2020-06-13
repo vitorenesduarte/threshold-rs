@@ -187,6 +187,35 @@ impl<A: Actor, E: EventSet> Clock<A, E> {
         self.clock.get(actor)
     }
 
+    /// Retrieves (a mutable reference to) the event set associated with some
+    /// `actor`.
+    ///
+    /// # Examples
+    /// ```
+    /// use threshold::*;
+    ///
+    /// let actor_a = "A";
+    ///
+    /// let mut clock = VClock::new();
+    /// assert_eq!(clock.get_mut(&actor_a), None);
+    ///
+    /// clock.add(&actor_a, 1);
+    /// clock.add(&actor_a, 2);
+    /// let max_set = clock
+    ///     .get_mut(&actor_a)
+    ///     .expect("there should be an event set");
+    /// max_set.add_event(3);
+    /// let mut iter = max_set.clone().event_iter();
+    ///
+    /// assert_eq!(iter.next(), Some(1));
+    /// assert_eq!(iter.next(), Some(2));
+    /// assert_eq!(iter.next(), Some(3));
+    /// assert_eq!(iter.next(), None);
+    /// ```
+    pub fn get_mut(&mut self, actor: &A) -> Option<&mut E> {
+        self.clock.get_mut(actor)
+    }
+
     /// Adds an event to the clock.
     /// If the clock did not have this event present, `true` is returned.
     /// If the clock did have this event present, `false` is returned.
