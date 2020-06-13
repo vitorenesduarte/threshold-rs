@@ -20,7 +20,6 @@
 use crate::*;
 use serde::{Deserialize, Serialize};
 use std::collections::hash_map::{self, HashMap};
-use std::collections::HashSet;
 use std::iter::FromIterator;
 
 // A Vector Clock is `Clock` with `MaxSet` as `EventSet`.
