@@ -24,8 +24,10 @@ use crate::EventSet;
 use serde::{Deserialize, Serialize};
 use std::cmp;
 use std::cmp::Ordering;
-use std::collections::BTreeMap;
+use std::collections::btree_map::{self, BTreeMap};
+use std::collections::HashMap;
 use std::fmt;
+use std::iter::FromIterator;
 
 #[derive(Clone, PartialEq, Eq, Default, Serialize, Deserialize)]
 pub struct AboveRangeSet {
@@ -38,7 +40,7 @@ pub struct AboveRangeSet {
 #[derive(Clone, PartialEq, Eq, Default, Serialize, Deserialize)]
 pub struct Ranges {
     // Mapping from start of the range to its end (sorted ASC)
-    ranges: BTreeMap<u64, u64>,
+    ranges: HashMap<u64, u64>,
 }
 
 impl EventSet for AboveRangeSet {
@@ -281,7 +283,7 @@ impl AboveRangeSet {
     /// Tries to set a new max contiguous event.
     fn try_compress(&mut self) {
         // drop the first range while its start is right after the max
-        while let Some(new_max) = self.ranges.maybe_drop_first(&self.max) {
+        while let Some(new_max) = self.ranges.try_drop(self.max + 1) {
             self.max = new_max;
         }
     }
@@ -346,7 +348,7 @@ impl Ranges {
     /// Creates a new `Ranges` instance.
     fn new() -> Self {
         Ranges {
-            ranges: BTreeMap::new(),
+            ranges: HashMap::new(),
         }
     }
 
@@ -363,69 +365,60 @@ impl Ranges {
 
     /// Adds a new range, assuming it is new, i.e.:
     /// - none of the events within the range have already been added.
-    /// TODO is it worth compressing?
-    #[allow(dead_code)]
-    fn add_and_compress(&mut self, start: u64, mut end: u64) {
-        // split map where the new range should be inserted
-        let mut after_new_range = self.ranges.split_off(&start);
+    /// TODO it didn't look worth compressing so we moved from BTreeMap to
+    /// HashMap
+    // fn add_and_compress(&mut self, start: u64, mut end: u64) {
+    //     // split map where the new range should be inserted
+    //     let mut after_new_range = self.ranges.split_off(&start);
 
-        let mut inserted = false;
+    //     let mut inserted = false;
 
-        // check if the previous range can be extended with the new range
-        if let Some(mut before) = self.ranges.last_entry() {
-            let before_end = before.get_mut();
-            if *before_end + 1 == start {
-                // extend the previous range
-                *before_end = end;
+    //     // check if the previous range can be extended with the new range
+    //     if let Some(mut before) = self.ranges.last_entry() {
+    //         let before_end = before.get_mut();
+    //         if *before_end + 1 == start {
+    //             // extend the previous range
+    //             *before_end = end;
 
-                // check if we can also extend this range with the first range
-                // in the splitted off ranges
-                if let Some(after) = after_new_range.first_entry() {
-                    if *before_end + 1 == *after.key() {
-                        // remove entry and extend range again
-                        *before_end = after.remove();
-                    }
-                }
-                // we're done, we only need to merge the splitted off ranges
-                inserted = true;
-            }
-        }
+    //             // check if we can also extend this range with the first
+    // range             // in the splitted off ranges
+    //             if let Some(after) = after_new_range.first_entry() {
+    //                 if *before_end + 1 == *after.key() {
+    //                     // remove entry and extend range again
+    //                     *before_end = after.remove();
+    //                 }
+    //             }
+    //             // we're done, we only need to merge the splitted off ranges
+    //             inserted = true;
+    //         }
+    //     }
 
-        // if here haven't extended the previous range, then we need to create a
-        // new one
-        if !inserted {
-            // check if we should create a new one with the provided `end`, or
-            // with the end of the next range (in case they can be merged)
-            if let Some(after) = after_new_range.first_entry() {
-                if end + 1 == *after.key() {
-                    // remove entry and extend new range to be added
-                    end = after.remove();
-                }
-            }
+    //     // if here haven't extended the previous range, then we need to
+    // create a     // new one
+    //     if !inserted {
+    //         // check if we should create a new one with the provided `end`,
+    // or         // with the end of the next range (in case they can be
+    // merged)         if let Some(after) = after_new_range.first_entry() {
+    //             if end + 1 == *after.key() {
+    //                 // remove entry and extend new range to be added
+    //                 end = after.remove();
+    //             }
+    //         }
 
-            // insert new range
-            self.ranges.insert(start, end);
-        }
+    //         // insert new range
+    //         self.ranges.insert(start, end);
+    //     }
 
-        // extend map with the ranges that have been splitted off
-        self.ranges.append(&mut after_new_range);
-    }
+    //     // extend map with the ranges that have been splitted off
+    //     self.ranges.append(&mut after_new_range);
+    // }
 
-    /// Checks if the event is part of any of the ranges.
+    /// Checks if the event is part of any of the ranges. This implementation
+    /// makes no effort in being efficient.
     fn contains(&self, event: &u64) -> bool {
-        for (start, end) in self.ranges.iter() {
-            if start <= event {
-                if event <= end {
-                    return true;
-                }
-            } else {
-                // if we're in a range that starts after event, then we can give
-                // up since it won't be a part of any other range that comes
-                // after
-                return false;
-            }
-        }
-        false
+        self.ranges
+            .iter()
+            .any(|(start, end)| start <= event && event <= end)
     }
 
     /// Joins two ranges. This implementation makes no effort in being
@@ -451,11 +444,12 @@ impl Ranges {
         self.ranges = result.ranges;
     }
 
-    /// Creates a iterator for all events represented by the ranges.
+    /// Creates a iterator for all events represented by the ranges. This
+    /// implementation makes no effort in being efficient.
     fn event_iter(self) -> RangesIter {
         RangesIter {
             current: None,
-            ranges: self.ranges.into_iter(),
+            ranges: BTreeMap::from_iter(self.ranges).into_iter(),
         }
     }
 
@@ -469,20 +463,16 @@ impl Ranges {
         result
     }
 
-    /// Drop the first range in case it can be used to update the maximum value.
-    fn maybe_drop_first(&mut self, max: &u64) -> Option<u64> {
-        if let Some(first_entry) = self.ranges.first_entry() {
-            if max + 1 == *first_entry.key() {
-                return Some(first_entry.remove());
-            }
-        }
-        None
+    /// Try to drop the range. If it succeeds then it can be used to update the maximum
+    /// value.
+    fn try_drop(&mut self, next: u64) -> Option<u64> {
+        self.ranges.remove(&next)
     }
 }
 
 pub struct RangesIter {
     current: Option<(u64, u64)>,
-    ranges: std::collections::btree_map::IntoIter<u64, u64>,
+    ranges: btree_map::IntoIter<u64, u64>,
 }
 
 impl Iterator for RangesIter {
