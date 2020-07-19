@@ -26,7 +26,7 @@ use std::marker::PhantomData;
 
 type EventCount = (u64, u64);
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct TClock<A: Actor, E: EventSet> {
     /// A `MultiSet` per `Actor`
     occurrences: HashMap<A, MultiSet<u64, EventCount>>,
