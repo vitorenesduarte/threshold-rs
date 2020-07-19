@@ -1,6 +1,3 @@
-// Needed for BTreeMap
-#![feature(map_first_last)]
-
 // This module contains the definition of `Count`, `Actor` and `EventSet`
 // traits.
 mod traits;
