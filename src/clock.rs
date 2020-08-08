@@ -20,6 +20,7 @@
 use crate::*;
 use serde::{Deserialize, Serialize};
 use std::collections::hash_map::{self, HashMap};
+use std::fmt;
 use std::iter::FromIterator;
 
 // A Vector Clock is `Clock` with `MaxSet` as `EventSet`.
@@ -31,7 +32,7 @@ pub type ARClock<A> = Clock<A, AboveRangeSet>;
 // A Below Exception Clock is `Clock` with `BelowExSet` as `EventSet`.
 pub type BEClock<A> = Clock<A, BelowExSet>;
 
-#[derive(Debug, Clone, PartialEq, Eq, Default, Serialize, Deserialize)]
+#[derive(Clone, PartialEq, Eq, Default, Serialize, Deserialize)]
 pub struct Clock<A: Actor, E: EventSet> {
     /// Mapping from actor identifier to an event set
     clock: HashMap<A, E>,
@@ -595,5 +596,13 @@ impl<'a, A: Actor, E: EventSet> Iterator for IterMut<'a, A, E> {
 
     fn next(&mut self) -> Option<Self::Item> {
         self.0.next()
+    }
+}
+
+impl<A: Actor, E: EventSet> fmt::Debug for Clock<A, E> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let clock: std::collections::BTreeMap<_, _> =
+            self.clock.iter().collect();
+        write!(f, "{:?}", clock)
     }
 }
