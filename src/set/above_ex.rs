@@ -340,7 +340,8 @@ impl fmt::Debug for AboveExSet {
         if self.exs.is_empty() {
             write!(f, "{}", self.max)
         } else {
-            write!(f, "({} + {:?})", self.max, self.exs)
+            let exs: std::collections::BTreeSet<_> = self.exs.iter().collect();
+            write!(f, "({} + {:?})", self.max, exs)
         }
     }
 }
