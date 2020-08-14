@@ -308,6 +308,14 @@ impl AboveExSet {
             exs: HashSet::from_iter(iter),
         }
     }
+
+    /// Returns a set of events that: 1) are below `ceil` (not including ceil)
+    /// and 2) are not part of `AboveExSet`.
+    pub fn missing_below(&self, ceil: u64) -> impl Iterator<Item = u64> + '_ {
+        let below = (self.max + 1)..ceil;
+        // only keep as events those that are not in the extras
+        below.filter(move |event| !self.exs.contains(event))
+    }
 }
 
 pub struct EventIter {

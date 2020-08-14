@@ -463,8 +463,8 @@ impl Ranges {
         result
     }
 
-    /// Try to drop the range. If it succeeds then it can be used to update the maximum
-    /// value.
+    /// Try to drop the range. If it succeeds then it can be used to update the
+    /// maximum value.
     fn try_drop(&mut self, next: u64) -> Option<u64> {
         self.ranges.remove(&next)
     }

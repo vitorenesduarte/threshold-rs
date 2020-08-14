@@ -4,7 +4,9 @@ test:
 	cargo test
 
 fmt:
+	rustup override set nightly
 	rustfmt src/*.rs src/tests/*.rs benches/*
+	rustup override set stable
 
 publish: test
 	cargo doc
