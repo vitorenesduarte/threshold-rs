@@ -120,6 +120,10 @@ impl EventSet for AboveExSet {
             // the end of the range is now the new max
             self.max = end;
 
+            // remove extras smaller than `self.max`
+            let max = self.max;
+            self.exs.retain(|ex| *ex > max);
+
             // maybe compress
             self.try_compress();
 
@@ -240,8 +244,9 @@ impl EventSet for AboveExSet {
         // the new max value is the max of both max values
         self.max = cmp::max(self.max, other.max);
 
-        // add all extras as extras
-        other.exs.iter().for_each(|ex| {
+        // add extras higher than `self.max` as extras
+        let max = self.max;
+        other.exs.iter().filter(|ex| **ex > max).for_each(|ex| {
             self.exs.insert(*ex);
         });
 
