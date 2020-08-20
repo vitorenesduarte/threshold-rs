@@ -146,11 +146,14 @@ impl<E: Ord> MultiSet<E, u64> {
     /// assert_eq!(mset.threshold(4), empty);
     /// ```
     pub fn threshold(&self, threshold: u64) -> Vec<&E> {
+        self.threshold_iter(threshold).collect()
+    }
+
+    pub fn threshold_iter(&self, threshold: u64) -> impl Iterator<Item = &E> {
         self.occurrences
             .iter()
-            .filter(|(_, &count)| count >= threshold)
+            .filter(move |(_, &count)| count >= threshold)
             .map(|(elem, _)| elem)
-            .collect()
     }
 }
 
