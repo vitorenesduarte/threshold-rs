@@ -155,6 +155,10 @@ impl<E: Ord> MultiSet<E, u64> {
             .filter(move |(_, &count)| count >= threshold)
             .map(|(elem, _)| elem)
     }
+
+    pub fn elem_count(&self) -> usize {
+        self.occurrences.len()
+    }
 }
 
 pub struct IntoIter<E: Ord, C: Count>(btree_map::IntoIter<E, C>);
