@@ -20,6 +20,7 @@ travis-ci = { repository = "vitorenesduarte/threshold-rs" }
 coveralls = { repository = "vitorenesduarte/threshold-rs", branch = "master", service = "github" }
 
 [dependencies]
+stateright = { git = "https://github.com/vitorenesduarte/stateright", rev = "7af2b570045e4a078d77494ef545498ea7b9a9f5" }
 serde = { version = "1.0", features = ["derive"] }
 
 [dev-dependencies]

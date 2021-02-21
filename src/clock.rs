@@ -19,7 +19,8 @@
 
 use crate::*;
 use serde::{Deserialize, Serialize};
-use std::collections::hash_map::{self, HashMap};
+use stateright::util::HashableHashMap as HashMap;
+use std::collections::hash_map;
 use std::fmt;
 use std::iter::FromIterator;
 
@@ -32,7 +33,7 @@ pub type ARClock<A> = Clock<A, AboveRangeSet>;
 // A Below Exception Clock is `Clock` with `BelowExSet` as `EventSet`.
 pub type BEClock<A> = Clock<A, BelowExSet>;
 
-#[derive(Clone, PartialEq, Eq, Default, Serialize, Deserialize)]
+#[derive(Clone, Hash, PartialEq, Eq, Default, Serialize, Deserialize)]
 pub struct Clock<A: Actor, E: EventSet> {
     /// Mapping from actor identifier to an event set
     clock: HashMap<A, E>,
@@ -43,7 +44,7 @@ impl<A: Actor, E: EventSet> Clock<A, E> {
     #[allow(clippy::new_without_default)]
     pub fn new() -> Self {
         Clock {
-            clock: HashMap::new(),
+            clock: Default::default(),
         }
     }
 
