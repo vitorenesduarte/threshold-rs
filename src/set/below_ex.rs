@@ -22,12 +22,12 @@
 
 use crate::EventSet;
 use serde::{Deserialize, Serialize};
+use stateright::util::HashableHashSet as HashSet;
 use std::cmp::{self, Ordering};
-use std::collections::HashSet;
 use std::fmt;
 use std::iter::FromIterator;
 
-#[derive(Clone, PartialEq, Eq, Default, Serialize, Deserialize)]
+#[derive(Clone, Hash, PartialEq, Eq, Default, Serialize, Deserialize)]
 pub struct BelowExSet {
     // Highest event seen
     max: u64,
@@ -42,7 +42,7 @@ impl EventSet for BelowExSet {
     fn new() -> Self {
         BelowExSet {
             max: 0,
-            exs: HashSet::new(),
+            exs: Default::default(),
         }
     }
 

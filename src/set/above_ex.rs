@@ -22,14 +22,14 @@
 
 use crate::EventSet;
 use serde::{Deserialize, Serialize};
+use stateright::util::HashableHashSet as HashSet;
 use std::cmp;
 use std::cmp::Ordering;
 use std::collections::btree_set::{self, BTreeSet};
-use std::collections::HashSet;
 use std::fmt;
 use std::iter::FromIterator;
 
-#[derive(Clone, PartialEq, Eq, Default, Serialize, Deserialize)]
+#[derive(Clone, Hash, PartialEq, Eq, Default, Serialize, Deserialize)]
 pub struct AboveExSet {
     // Highest contiguous event seen
     max: u64,
@@ -44,7 +44,7 @@ impl EventSet for AboveExSet {
     fn new() -> Self {
         AboveExSet {
             max: 0,
-            exs: HashSet::new(),
+            exs: Default::default(),
         }
     }
 

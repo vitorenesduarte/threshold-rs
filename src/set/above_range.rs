@@ -22,14 +22,14 @@
 
 use crate::EventSet;
 use serde::{Deserialize, Serialize};
+use stateright::util::HashableHashMap as HashMap;
 use std::cmp;
 use std::cmp::Ordering;
 use std::collections::btree_map::{self, BTreeMap};
-use std::collections::HashMap;
 use std::fmt;
 use std::iter::FromIterator;
 
-#[derive(Clone, PartialEq, Eq, Default, Serialize, Deserialize)]
+#[derive(Clone, Hash, PartialEq, Eq, Default, Serialize, Deserialize)]
 pub struct AboveRangeSet {
     // Highest contiguous event seen
     max: u64,
@@ -37,7 +37,7 @@ pub struct AboveRangeSet {
     ranges: Ranges,
 }
 
-#[derive(Clone, PartialEq, Eq, Default, Serialize, Deserialize)]
+#[derive(Clone, Hash, PartialEq, Eq, Default, Serialize, Deserialize)]
 pub struct Ranges {
     // Mapping from start of the range to its end (sorted ASC)
     ranges: HashMap<u64, u64>,
@@ -348,7 +348,7 @@ impl Ranges {
     /// Creates a new `Ranges` instance.
     fn new() -> Self {
         Ranges {
-            ranges: HashMap::new(),
+            ranges: Default::default(),
         }
     }
 

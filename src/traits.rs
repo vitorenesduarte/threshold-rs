@@ -40,7 +40,7 @@ pub trait Actor: Debug + Clone + Hash + Eq + Ord {}
 impl<A: Debug + Clone + Hash + Eq + Ord> Actor for A {}
 
 /// EventSet trait to be implemented by `MaxSet`, `BelowExSet` and `AboveExSet`.
-pub trait EventSet: Clone + Debug + Default {
+pub trait EventSet: Clone + Hash + Debug + Default {
     type EventIter: Iterator<Item = u64>;
 
     /// Returns a new instance.
