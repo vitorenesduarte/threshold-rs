@@ -251,6 +251,10 @@ impl EventSet for BelowExSet {
         todo!("BelowExSet::meet not yet implemented")
     }
 
+    fn subtracted(&self, _other: &Self) -> Vec<u64> {
+        todo!("BelowExSet::subtracted not yet implemented")
+    }
+
     /// Returns a `BelowExSet` event iterator with all events from lowest to
     /// highest.
     ///

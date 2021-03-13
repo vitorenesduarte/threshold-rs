@@ -22,8 +22,7 @@
 
 use crate::EventSet;
 use serde::{Deserialize, Serialize};
-use std::cmp;
-use std::cmp::Ordering;
+use std::cmp::{self, Ordering};
 use std::collections::btree_set::{self, BTreeSet};
 use std::collections::HashSet;
 use std::fmt;
@@ -272,6 +271,20 @@ impl EventSet for AboveExSet {
 
         // maybe compress
         self.try_compress();
+    }
+
+    fn subtracted(&self, other: &Self) -> Vec<u64> {
+        //include only extras that are not events in `other`
+        let iter = self.exs.iter().filter(|ex| !other.is_event(**ex)).cloned();
+        if self.max > other.max {
+            iter.chain(
+                ((other.max + 1)..=self.max)
+                    .filter(|event| !other.exs.contains(event)),
+            )
+            .collect()
+        } else {
+            iter.collect()
+        }
     }
 
     /// Returns a `AboveExSet` event iterator with all events from lowest to

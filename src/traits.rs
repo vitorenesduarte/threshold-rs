@@ -117,6 +117,10 @@ pub trait EventSet: Clone + Debug + Default {
     /// Intersects `other` `EventSet` with `self`.
     fn meet(&mut self, other: &Self);
 
+    /// Return a list of events that remain when `other` is subtracted from
+    /// `self`.
+    fn subtracted(&self, other: &Self) -> Vec<u64>;
+
     /// Returns an iterator containing all elements represented by this event
     /// set.
     fn event_iter(self) -> Self::EventIter;

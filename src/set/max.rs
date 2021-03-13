@@ -178,6 +178,10 @@ impl EventSet for MaxSet {
         self.max = std::cmp::min(self.max, other.max);
     }
 
+    fn subtracted(&self, _other: &Self) -> Vec<u64> {
+        todo!("MaxSet::subtracted not yet implemented")
+    }
+
     /// Returns a `MaxSet` event iterator with all events from lowest to
     /// highest.
     ///

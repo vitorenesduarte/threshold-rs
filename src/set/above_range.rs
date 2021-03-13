@@ -254,6 +254,10 @@ impl EventSet for AboveRangeSet {
         todo!("AboveRangeSet::meet not yet implemented")
     }
 
+    fn subtracted(&self, _other: &Self) -> Vec<u64> {
+        todo!("AboveRangeSet::subtracted not yet implemented")
+    }
+
     /// Returns a `AboveRangeSet` event iterator with all events from lowest to
     /// highest.
     ///
