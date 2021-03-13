@@ -254,8 +254,24 @@ impl EventSet for AboveExSet {
         self.try_compress();
     }
 
-    fn meet(&mut self, _other: &Self) {
-        todo!("AboveExSet::meet not yet implemented")
+    fn meet(&mut self, other: &Self) {
+        // the new max value is the min of both max values
+        let previous_max = self.max;
+        self.max = cmp::min(self.max, other.max);
+
+        // keep as extras only those that are extras in `other` or are below
+        // `other.max`
+        self.exs
+            .retain(|ex| ex <= &other.max || other.exs.contains(ex));
+
+        // add as extras what's in between new max and previous max that is an
+        // extra in `other`
+        self.exs.extend(
+            ((self.max + 1)..=previous_max).filter(|ex| other.exs.contains(ex)),
+        );
+
+        // maybe compress
+        self.try_compress();
     }
 
     /// Returns a `AboveExSet` event iterator with all events from lowest to
