@@ -61,10 +61,6 @@ fn subtracted(aeclock_a: AEClock<Musk>, aeclock_b: AEClock<Musk>) -> bool {
             .unwrap_or_default()
             .into_iter()
             .collect();
-            println!("a       : {:?}", a);
-            println!("b       : {:?}", b);
-            println!("expected: {:?}", expected);
-            println!("result  : {:?}", result);
         expected == result
     })
 }
