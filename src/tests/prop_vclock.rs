@@ -1,6 +1,7 @@
 use crate::tests::arbitrary::Musk;
 use crate::*;
 use quickcheck_macros::quickcheck;
+use std::collections::BTreeSet;
 
 #[quickcheck]
 fn next(actor: Musk, vclock: VClock<Musk>) -> bool {
@@ -48,5 +49,26 @@ fn meet(vclock_a: VClock<Musk>, vclock_b: VClock<Musk>) -> bool {
         } else {
             true
         }
+    })
+}
+
+#[quickcheck]
+fn subtracted(vclock_a: VClock<Musk>, vclock_b: VClock<Musk>) -> bool {
+    let result = vclock_a.subtracted(&vclock_b);
+
+    vclock_a.into_iter().all(|(actor, eset_a)| {
+        let a = eset_a.event_iter().collect::<BTreeSet<_>>();
+        let b = vclock_b
+            .get(&actor)
+            .map(|eset_b| eset_b.clone().event_iter().collect::<BTreeSet<_>>())
+            .unwrap_or_default();
+        let expected = a.difference(&b).cloned().collect::<BTreeSet<_>>();
+        let result = result
+            .get(&actor)
+            .cloned()
+            .unwrap_or_default()
+            .into_iter()
+            .collect();
+        expected == result
     })
 }
